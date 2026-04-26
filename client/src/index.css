@@ -1,0 +1,148 @@
+/* ========================================
+   Tailwind CSS Directives
+   ======================================== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   Google Font Import — Inter
+   ======================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ========================================
+   Base Layer — Global Resets & Defaults
+   ======================================== */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #0D0D0D;
+    color: #F0F0F0;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.25;
+    color: #FAFAFA;
+  }
+
+  a {
+    color: #D4A017;
+    text-decoration: none;
+    transition: color 150ms ease-in-out;
+  }
+
+  a:hover {
+    color: #E5B83A;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+
+  /* Reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ========================================
+   Components Layer — Reusable UI Patterns
+   ======================================== */
+@layer components {
+  /* Primary Button — Gold */
+  .btn-primary {
+    @apply px-4 py-2 bg-primary-500 text-neutral-900 rounded-lg font-semibold
+           hover:bg-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400
+           focus:ring-offset-1 focus:ring-offset-neutral-900
+           transition-all duration-200 ease-in-out
+           disabled:bg-neutral-600 disabled:text-neutral-400 disabled:cursor-not-allowed;
+  }
+
+  /* Secondary Button */
+  .btn-secondary {
+    @apply px-4 py-2 bg-neutral-800 text-neutral-100 rounded-lg font-medium
+           border border-neutral-600 hover:bg-neutral-700 hover:border-neutral-500
+           focus:outline-none focus:ring-2 focus:ring-primary-500/40
+           focus:ring-offset-1 focus:ring-offset-neutral-900
+           transition-all duration-200 ease-in-out;
+  }
+
+  /* Danger Button */
+  .btn-danger {
+    @apply px-4 py-2 bg-red-600 text-white rounded-lg font-medium
+           hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400
+           focus:ring-offset-1 focus:ring-offset-neutral-900
+           transition-all duration-200 ease-in-out;
+  }
+
+  /* Input Field */
+  .input-field {
+    @apply w-full px-4 py-3 bg-neutral-800 border border-neutral-600 rounded-lg
+           text-sm text-neutral-100 placeholder:text-neutral-500
+           focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-1
+           focus:ring-offset-neutral-900 focus:border-primary-500
+           transition-all duration-200 ease-in-out;
+  }
+
+  /* Input Error State */
+  .input-error {
+    @apply w-full px-4 py-3 bg-neutral-800 border border-red-500 rounded-lg
+           text-sm text-neutral-100
+           focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1
+           focus:ring-offset-neutral-900
+           transition-all duration-200 ease-in-out;
+  }
+
+  /* Card */
+  .card {
+    @apply bg-neutral-800 border border-neutral-700 shadow-md rounded-xl p-4
+           transition-all duration-200;
+  }
+
+  /* Container */
+  .container-main {
+    @apply max-w-7xl mx-auto px-4 md:px-8;
+  }
+}
+
+/* ========================================
+   Utilities Layer — Custom Helpers
+   ======================================== */
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-primary-600;
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-300 via-primary-400 to-primary-600;
+  }
+
+  .border-gold {
+    border-image: linear-gradient(to right, #D4A017, #E5B83A) 1;
+  }
+}
