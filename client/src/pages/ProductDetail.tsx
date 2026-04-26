@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../store/CartContext';
 import Button from '../components/ui/Button';
@@ -209,6 +209,13 @@ const ProductDetail: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [activeTab, setActiveTab] = useState<'description' | 'features'>('description');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const delay = Math.floor(Math.random() * 300) + 500; // 500–800ms
+    const timer = setTimeout(() => setLoading(false), delay);
+    return () => clearTimeout(timer);
+  }, [id]);
 
   const product = PRODUCTS.find((p) => p.id === Number(id));
 
@@ -253,16 +260,75 @@ const ProductDetail: React.FC = () => {
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
+  if (loading) {
+    return (
+      <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-12">
+          {/* Breadcrumb skeleton */}
+          <div className="flex items-center gap-2 mb-8">
+            <div className="h-4 w-12 rounded bg-neutral-800 animate-pulse" />
+            <span className="text-neutral-700">/</span>
+            <div className="h-4 w-16 rounded bg-neutral-800 animate-pulse" />
+            <span className="text-neutral-700">/</span>
+            <div className="h-4 w-32 rounded bg-neutral-800 animate-pulse" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            {/* Image skeleton */}
+            <div className="rounded-xl border border-neutral-800 bg-neutral-800/50 aspect-square animate-pulse" />
+
+            {/* Details skeleton */}
+            <div className="flex flex-col">
+              {/* Category */}
+              <div className="h-3 w-20 rounded bg-neutral-800 animate-pulse mb-2" />
+              {/* Title */}
+              <div className="h-8 w-3/4 rounded bg-neutral-800 animate-pulse mb-4" />
+              {/* Rating */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-4 w-24 rounded bg-neutral-800 animate-pulse" />
+                <div className="h-4 w-8 rounded bg-neutral-800 animate-pulse" />
+                <div className="h-4 w-20 rounded bg-neutral-800 animate-pulse" />
+              </div>
+              {/* Price */}
+              <div className="flex items-baseline gap-3 mb-6 pb-6 border-b border-neutral-800">
+                <div className="h-8 w-24 rounded bg-neutral-800 animate-pulse" />
+                <div className="h-5 w-16 rounded bg-neutral-800 animate-pulse" />
+              </div>
+              {/* Tabs */}
+              <div className="flex gap-1 mb-4">
+                <div className="h-9 w-28 rounded-lg bg-neutral-800 animate-pulse" />
+                <div className="h-9 w-24 rounded-lg bg-neutral-800 animate-pulse" />
+              </div>
+              {/* Description lines */}
+              <div className="space-y-2 mb-8 min-h-[120px]">
+                <div className="h-4 w-full rounded bg-neutral-800 animate-pulse" />
+                <div className="h-4 w-full rounded bg-neutral-800 animate-pulse" />
+                <div className="h-4 w-5/6 rounded bg-neutral-800 animate-pulse" />
+                <div className="h-4 w-2/3 rounded bg-neutral-800 animate-pulse" />
+              </div>
+              {/* Action buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="h-12 w-32 rounded-xl bg-neutral-800 animate-pulse" />
+                <div className="h-12 flex-1 rounded-xl bg-neutral-800 animate-pulse" />
+                <div className="h-12 w-12 rounded-xl bg-neutral-800 animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-12">
         {/* ── Breadcrumb ── */}
-        <nav className="flex items-center gap-2 text-sm text-neutral-500 mb-8">
-          <Link to="/" className="hover:text-primary-400 transition-colors duration-200">Home</Link>
-          <span>/</span>
-          <span className="text-neutral-400">{product.category}</span>
-          <span>/</span>
-          <span className="text-primary-400">{product.name}</span>
+        <nav className="flex items-center gap-2 text-sm text-neutral-500 mb-8 overflow-hidden">
+          <Link to="/" className="hover:text-primary-400 transition-colors duration-200 flex-shrink-0">Home</Link>
+          <span className="flex-shrink-0">/</span>
+          <span className="text-neutral-400 flex-shrink-0">{product.category}</span>
+          <span className="flex-shrink-0">/</span>
+          <span className="text-primary-400 truncate">{product.name}</span>
         </nav>
 
         {/* ── Main Grid ── */}
@@ -315,13 +381,13 @@ const ProductDetail: React.FC = () => {
             </div>
 
             {/* Price */}
-            <div className="flex items-baseline gap-3 mb-6 pb-6 border-b border-neutral-800">
-              <span className="text-3xl font-bold text-primary-400">${product.price}</span>
+            <div className="flex flex-wrap items-baseline gap-2 sm:gap-3 mb-6 pb-6 border-b border-neutral-800">
+              <span className="text-2xl sm:text-3xl font-bold text-primary-400">₹{product.price}</span>
               {product.originalPrice && (
                 <>
-                  <span className="text-lg text-neutral-500 line-through">${product.originalPrice}</span>
+                  <span className="text-lg text-neutral-500 line-through">₹{product.originalPrice}</span>
                   <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-400 text-xs font-bold">
-                    Save ${(product.originalPrice - product.price).toFixed(2)}
+                    Save ₹{(product.originalPrice - product.price).toFixed(2)}
                   </span>
                 </>
               )}
@@ -331,7 +397,7 @@ const ProductDetail: React.FC = () => {
             <div className="flex gap-1 mb-4">
               <button
                 onClick={() => setActiveTab('description')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-2 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeTab === 'description'
                     ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
                     : 'text-neutral-500 hover:text-neutral-300'
@@ -341,7 +407,7 @@ const ProductDetail: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveTab('features')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-2 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeTab === 'features'
                     ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
                     : 'text-neutral-500 hover:text-neutral-300'
@@ -354,7 +420,7 @@ const ProductDetail: React.FC = () => {
             {/* Tab Content */}
             <div className="mb-8 min-h-[120px]">
               {activeTab === 'description' ? (
-                <p className="text-sm text-neutral-400 leading-relaxed">
+                <p className="text-sm text-neutral-400 leading-relaxed break-words">
                   {product.description}
                 </p>
               ) : (
@@ -374,10 +440,10 @@ const ProductDetail: React.FC = () => {
             {/* Quantity + Add to Cart */}
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               {/* Quantity */}
-              <div className="flex items-center rounded-xl border border-neutral-700 bg-neutral-800 overflow-hidden transition-all duration-200">
+              <div className="flex items-center rounded-xl border border-neutral-700 bg-neutral-800 overflow-hidden transition-all duration-200 w-full sm:w-auto">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 py-3 text-neutral-400 hover:text-primary-400 hover:bg-neutral-700 transition-all duration-200"
+                  className="px-4 py-3 min-h-[44px] text-neutral-400 hover:text-primary-400 hover:bg-neutral-700 transition-all duration-200"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -388,7 +454,7 @@ const ProductDetail: React.FC = () => {
                 </span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="px-4 py-3 text-neutral-400 hover:text-primary-400 hover:bg-neutral-700 transition-all duration-200"
+                  className="px-4 py-3 min-h-[44px] text-neutral-400 hover:text-primary-400 hover:bg-neutral-700 transition-all duration-200"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -399,11 +465,11 @@ const ProductDetail: React.FC = () => {
               {/* Add to Cart */}
               <Button
                 onClick={handleAddToCart}
-                variant="primary"
+                variant="outline"
                 size="lg"
                 className={`flex-1 ${
                   addedToCart
-                    ? '!bg-emerald-500 !from-emerald-500 !to-emerald-500 !text-white !shadow-lg'
+                    ? '!bg-emerald-500 !border-emerald-500 !text-white !shadow-lg'
                     : ''
                 }`}
               >
@@ -412,20 +478,36 @@ const ProductDetail: React.FC = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    Added to Cart!
+                    Added!
                   </>
                 ) : (
                   <>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
                     </svg>
-                    Add to Cart — ${(product.price * quantity).toFixed(2)}
+                    Add to Cart
                   </>
                 )}
               </Button>
 
+              {/* Buy Now */}
+              <Button
+                onClick={() => {
+                  handleAddToCart();
+                  navigate('/checkout');
+                }}
+                variant="primary"
+                size="lg"
+                className="flex-1"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Buy Now — ₹{(product.price * quantity).toFixed(2)}
+              </Button>
+
               {/* Wishlist */}
-              <button className="p-3 rounded-xl border border-neutral-700 bg-neutral-800 text-neutral-400 hover:text-primary-400 hover:border-primary-500/30 transition-all duration-200">
+              <button className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl border border-neutral-700 bg-neutral-800 text-neutral-400 hover:text-primary-400 hover:border-primary-500/30 transition-all duration-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>

@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import ProductCard from '../components/ProductCard';
 import type { ProductData } from '../components/ProductCard';
+import SkeletonCard from '../components/ui/SkeletonCard';
+import EmptyState from '../components/ui/EmptyState';
 
 /* ── Mock Data ── */
 const PRODUCTS: ProductData[] = [
@@ -95,11 +97,20 @@ const CATEGORIES = ['All', 'Audio', 'Wearables', 'Footwear', 'Accessories', 'Eye
    ======================================== */
 const Home: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const filteredProducts =
-    activeCategory === 'All'
-      ? PRODUCTS
-      : PRODUCTS.filter((p) => p.category === activeCategory);
+  useEffect(() => {
+    const delay = Math.floor(Math.random() * 200) + 1000;
+    const timer = setTimeout(() => setLoading(false), delay);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const filteredProducts = PRODUCTS.filter((p) => {
+    const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="bg-neutral-900 min-h-screen">
@@ -114,7 +125,7 @@ const Home: React.FC = () => {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary-400/3 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 md:px-8 py-20 sm:py-28 lg:py-36">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-16 sm:py-28 lg:py-36">
           <div className="text-center">
             {/* Badge */}
             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-sm font-medium mb-6">
@@ -138,11 +149,11 @@ const Home: React.FC = () => {
 
             {/* CTA */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a href="#products">
+              <Link to="/login">
                 <Button variant="primary" size="lg">
                   Shop Now
                 </Button>
-              </a>
+              </Link>
               <Link to="/signup">
                 <Button variant="outline" size="lg">
                   Become a Vendor
@@ -151,7 +162,7 @@ const Home: React.FC = () => {
             </div>
 
             {/* Stats */}
-            <div className="mt-16 grid grid-cols-3 gap-8 max-w-md mx-auto">
+            <div className="mt-12 sm:mt-16 grid grid-cols-3 gap-4 sm:gap-8 max-w-md mx-auto">
               {[
                 { value: '500+', label: 'Products' },
                 { value: '50+', label: 'Vendors' },
@@ -173,7 +184,7 @@ const Home: React.FC = () => {
       {/* ══════════════════════════════════════
          PRODUCTS SECTION
          ══════════════════════════════════════ */}
-      <section id="products" className="relative max-w-7xl mx-auto px-4 md:px-8 py-16 sm:py-20">
+      <section id="products" className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-20">
         {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-neutral-100">
@@ -184,17 +195,51 @@ const Home: React.FC = () => {
           </p>
         </div>
 
+        {/* Search Input */}
+        <div className="flex justify-center mb-6">
+          <div className="relative w-full md:w-96">
+            {/* Search Icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 pointer-events-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-10 py-3 rounded-lg border border-neutral-700 bg-neutral-800/80 text-neutral-100 placeholder-neutral-500 text-sm focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 min-h-[44px]"
+            />
+            {/* Clear Button */}
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors duration-200"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        <div className="flex gap-2 mb-10 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center scrollbar-hide">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
-                activeCategory === cat
-                  ? 'bg-primary-500 text-neutral-900 shadow-gold'
-                  : 'bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-primary-500/30 hover:text-primary-400'
-              }`}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 whitespace-nowrap min-h-[40px] flex items-center ${activeCategory === cat
+                ? 'bg-primary-500 text-neutral-900 shadow-gold'
+                : 'bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-primary-500/30 hover:text-primary-400'
+                }`}
             >
               {cat}
             </button>
@@ -202,21 +247,43 @@ const Home: React.FC = () => {
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-
-        {/* Empty state */}
-        {filteredProducts.length === 0 && (
-          <div className="text-center py-20">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-neutral-800 border border-neutral-700">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <EmptyState
+            icon={
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-10 w-10 text-neutral-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
-            </div>
-            <p className="text-neutral-500 text-base">No products in this category yet.</p>
+            }
+            title="No products found"
+            description="Try adjusting your search or filters"
+            actionLabel="Clear Filters"
+            onAction={() => {
+              setSearchTerm('');
+              setActiveCategory('All');
+            }}
+          />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
         )}
 
@@ -233,7 +300,7 @@ const Home: React.FC = () => {
          ══════════════════════════════════════ */}
       <section className="border-t border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
             {[
               {
                 icon: (
@@ -288,3 +355,4 @@ const Home: React.FC = () => {
 };
 
 export default Home;
+

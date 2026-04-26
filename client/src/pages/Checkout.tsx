@@ -104,7 +104,7 @@ const Checkout: React.FC = () => {
 
   /* ── Input helper ── */
   const inputClass = (field: keyof FormState) =>
-    `w-full rounded-xl border bg-neutral-800 px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-neutral-900 ${
+    `w-full rounded-xl border bg-neutral-800 px-4 py-3 text-sm text-neutral-100 placeholder:text-neutral-500 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-neutral-900 min-h-[44px] ${
       errors[field]
         ? 'border-red-500/60 focus:ring-red-400/30'
         : 'border-neutral-700 focus:border-primary-400/60 focus:ring-primary-400/20'
@@ -112,7 +112,7 @@ const Checkout: React.FC = () => {
 
   return (
     <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
         {/* ── Page Title ── */}
         <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-8">Checkout</h1>
 
@@ -122,7 +122,7 @@ const Checkout: React.FC = () => {
                LEFT: User Details Form
                ══════════════════════════════ */}
             <div className="lg:col-span-2">
-              <div className="rounded-xl border border-neutral-800 bg-neutral-800/60 p-6">
+              <div className="rounded-xl border border-neutral-800 bg-neutral-800/60 p-4 sm:p-6">
                 <h2 className="text-lg font-bold text-neutral-100 mb-6">
                   Shipping Details
                 </h2>
@@ -245,7 +245,7 @@ const Checkout: React.FC = () => {
                RIGHT: Order Summary
                ══════════════════════════════ */}
             <div className="lg:col-span-1">
-              <div className="sticky top-24 rounded-xl border border-neutral-800 bg-neutral-800/60 p-6">
+              <div className="sticky top-24 rounded-xl border border-neutral-800 bg-neutral-800/60 p-4 sm:p-6">
                 <h2 className="text-lg font-bold text-neutral-100 mb-6">
                   Order Summary
                 </h2>
@@ -275,7 +275,7 @@ const Checkout: React.FC = () => {
                         </div>
                       </div>
                       <span className="text-sm font-semibold text-neutral-300 flex-shrink-0">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ₹{(item.price * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   ))}
@@ -287,8 +287,8 @@ const Checkout: React.FC = () => {
                     <span className="text-base font-bold text-neutral-100">
                       Total
                     </span>
-                    <span className="text-2xl font-bold text-primary-400">
-                      ${totalPrice.toFixed(2)}
+                    <span className="text-xl sm:text-2xl font-bold text-primary-400">
+                      ₹{totalPrice.toFixed(2)}
                     </span>
                   </div>
                 </div>

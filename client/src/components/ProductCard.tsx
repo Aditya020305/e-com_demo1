@@ -69,7 +69,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   );
 
   return (
-    <div className="group relative flex flex-col rounded-xl border border-neutral-800 bg-neutral-900/80 overflow-hidden shadow-sm transition-all duration-300 hover:border-primary-500/30 hover:shadow-gold hover:-translate-y-1">
+    <div className="group relative flex flex-col w-full rounded-xl border border-neutral-800 bg-neutral-900/80 overflow-hidden shadow-sm transition-all duration-300 hover:border-primary-500/30 hover:shadow-gold hover:-translate-y-1">
       {/* ── Badges ── */}
       {product.badge && (
         <div
@@ -177,11 +177,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Price — pushed to bottom */}
         <div className="flex items-baseline gap-2 mt-auto pt-2">
           <span className="text-lg font-semibold text-primary-400">
-            ${product.price}
+            ₹{product.price}
           </span>
           {product.originalPrice && (
             <span className="text-xs text-neutral-500 line-through">
-              ${product.originalPrice}
+              ₹{product.originalPrice}
             </span>
           )}
         </div>

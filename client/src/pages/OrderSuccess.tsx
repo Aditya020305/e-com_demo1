@@ -48,7 +48,7 @@ const OrderSuccess: React.FC = () => {
               Amount Paid
             </p>
             <p className="text-3xl font-bold text-primary-400">
-              ${total.toFixed(2)}
+              ₹{total.toFixed(2)}
             </p>
           </div>
         )}
