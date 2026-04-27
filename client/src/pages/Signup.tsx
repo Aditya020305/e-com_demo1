@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 
 /* ── Types ── */
@@ -86,11 +87,15 @@ const IconDocument: React.FC = () => (
    Signup Page
    ======================================== */
 const Signup: React.FC = () => {
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
   const [form, setForm] = useState<FormState>({ name: '', email: '', password: '', confirmPassword: '' });
   const [errors, setErrors] = useState<ErrorState>({});
   const [touched, setTouched] = useState<TouchedState>({ name: false, email: false, password: false, confirmPassword: false });
   const [isLoading, setIsLoading] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const currentErrors = validateForm(form);
   const hasErrors = Object.keys(currentErrors).length > 0;
@@ -115,19 +120,26 @@ const Signup: React.FC = () => {
   }, []);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
       setSubmitAttempted(true);
+      setApiError(null);
       const validationErrors = validateForm(form);
       setErrors(validationErrors);
       if (Object.keys(validationErrors).length > 0) return;
       setIsLoading(true);
-      setTimeout(() => {
-        console.log('✅ Signup submitted:', { name: form.name, email: form.email });
+      try {
+        await register(form.name, form.email, form.password);
+        navigate('/');
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message || 'Registration failed. Please try again.';
+        setApiError(message);
+      } finally {
         setIsLoading(false);
-      }, 1500);
+      }
     },
-    [form],
+    [form, register, navigate],
   );
 
   const inputBorder = (field: keyof ErrorState) =>
@@ -258,6 +270,16 @@ const Signup: React.FC = () => {
                 <a href="#privacy" className="text-primary-400 hover:text-primary-300 font-medium">Privacy Policy</a>
               </span>
             </label>
+
+            {/* API Error */}
+            {apiError && (
+              <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {apiError}
+              </div>
+            )}
 
             {/* Submit */}
             <div className="pt-1">

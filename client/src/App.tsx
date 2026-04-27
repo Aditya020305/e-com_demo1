@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 /* ── Context ── */
 import { CartProvider } from './store/CartContext';
+import { AuthProvider } from './context/AuthContext';
 
 /* ── Components ── */
 import Navbar from './components/Navbar';
@@ -15,6 +16,7 @@ import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
+import Orders from './pages/Orders';
 
 /* ========================================
    Footer Component
@@ -44,6 +46,7 @@ const Footer: React.FC = () => {
    ======================================== */
 const App: React.FC = () => {
   return (
+    <AuthProvider>
     <BrowserRouter>
       <CartProvider>
         <div className="min-h-screen flex flex-col bg-neutral-900">
@@ -52,12 +55,14 @@ const App: React.FC = () => {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/products" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-success" element={<OrderSuccess />} />
+              <Route path="/orders" element={<Orders />} />
             </Routes>
           </main>
 
@@ -65,6 +70,7 @@ const App: React.FC = () => {
         </div>
       </CartProvider>
     </BrowserRouter>
+    </AuthProvider>
   );
 };
 

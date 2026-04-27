@@ -1,8 +1,15 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import {
+  fetchCart as apiFetchCart,
+  addToCart as apiAddToCart,
+  updateCartItem as apiUpdateCartItem,
+  removeCartItem as apiRemoveCartItem,
+} from '../services/cartService';
+import type { CartItem as ApiCartItem } from '../services/cartService';
 
 /* ── Types ── */
 export interface CartItem {
-  id: number;
+  id: string;
   name: string;
   price: number;
   image: string;
@@ -11,13 +18,24 @@ export interface CartItem {
 
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (product: Omit<CartItem, 'quantity'>) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
+  loading: boolean;
+  fetchCart: () => Promise<void>;
+  addToCart: (productId: string) => Promise<void>;
+  removeFromCart: (productId: string) => Promise<void>;
+  updateQuantity: (productId: string, quantity: number) => Promise<void>;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
 }
+
+/* ── Map API item → UI item ── */
+const mapItem = (item: ApiCartItem): CartItem => ({
+  id: item.product._id,
+  name: item.product.name,
+  price: item.product.price,
+  image: item.product.images?.[0] || '/products/headphones.png',
+  quantity: item.quantity,
+});
 
 /* ── Context ── */
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -25,32 +43,66 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 /* ── Provider ── */
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const addToCart = useCallback((product: Omit<CartItem, 'quantity'>) => {
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        );
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
+  const fetchCart = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setCartItems([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await apiFetchCart();
+      const items = res.data.items || [];
+      setCartItems(items.map(mapItem));
+    } catch {
+      setCartItems([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const removeFromCart = useCallback((id: number) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+  /* Load cart when token exists */
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
+
+  const addToCart = useCallback(async (productId: string) => {
+    setLoading(true);
+    try {
+      const res = await apiAddToCart(productId, 1);
+      setCartItems(res.data.items.map(mapItem));
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const updateQuantity = useCallback((id: number, quantity: number) => {
+  const removeFromCart = useCallback(async (productId: string) => {
+    setLoading(true);
+    try {
+      const res = await apiRemoveCartItem(productId);
+      setCartItems(res.data.items.map(mapItem));
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateQuantity = useCallback(async (productId: string, quantity: number) => {
     if (quantity < 1) return;
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, quantity } : item,
-      ),
-    );
+    setLoading(true);
+    try {
+      const res = await apiUpdateCartItem(productId, quantity);
+      setCartItems(res.data.items.map(mapItem));
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const clearCart = useCallback(() => {
@@ -70,6 +122,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = useMemo(
     () => ({
       cartItems,
+      loading,
+      fetchCart,
       addToCart,
       removeFromCart,
       updateQuantity,
@@ -77,7 +131,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       totalItems,
       totalPrice,
     }),
-    [cartItems, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice],
+    [cartItems, loading, fetchCart, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

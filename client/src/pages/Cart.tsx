@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../store/CartContext';
+import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 
@@ -8,8 +9,55 @@ import EmptyState from '../components/ui/EmptyState';
    Cart Page
    ======================================== */
 const Cart: React.FC = () => {
-  const { cartItems, removeFromCart, updateQuantity, totalPrice } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, totalPrice, loading } = useCart();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  /* ── Redirect if not logged in ── */
+  if (!isAuthenticated) {
+    return (
+      <section className="bg-neutral-900 px-4">
+        <EmptyState
+          icon={
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-10 w-10 text-neutral-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          }
+          title="Please log in"
+          description="You need to be logged in to view your cart"
+          actionLabel="Login"
+          onAction={() => navigate('/login')}
+        />
+      </section>
+    );
+  }
+
+  /* ── Loading ── */
+  if (loading && cartItems.length === 0) {
+    return (
+      <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-8">Your Cart</h1>
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-24 rounded-xl bg-neutral-800/60 border border-neutral-800 animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   /* ── Empty Cart ── */
   if (cartItems.length === 0) {
@@ -52,7 +100,7 @@ const Cart: React.FC = () => {
           {cartItems.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col sm:flex-row items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-800/60 p-4 sm:p-5 transition-all duration-200 hover:border-neutral-700 hover:shadow-sm"
+              className={`flex flex-col sm:flex-row items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-800/60 p-4 sm:p-5 transition-all duration-200 hover:border-neutral-700 hover:shadow-sm ${loading ? 'opacity-60 pointer-events-none' : ''}`}
             >
               {/* Image */}
               <Link to={`/product/${item.id}`} className="flex-shrink-0">
@@ -82,7 +130,7 @@ const Cart: React.FC = () => {
               <div className="flex items-center gap-0 rounded-xl border border-neutral-700 bg-neutral-900 overflow-hidden transition-all duration-200 w-full sm:w-auto">
                 <button
                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                  disabled={item.quantity <= 1}
+                  disabled={item.quantity <= 1 || loading}
                   className="px-3 py-2 min-h-[44px] text-neutral-400 hover:text-primary-400 hover:bg-neutral-700 transition-all duration-200 text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   −
@@ -92,7 +140,8 @@ const Cart: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                  className="px-3 py-2 min-h-[44px] text-neutral-400 hover:text-primary-400 hover:bg-neutral-700 transition-all duration-200 text-sm font-bold"
+                  disabled={loading}
+                  className="px-3 py-2 min-h-[44px] text-neutral-400 hover:text-primary-400 hover:bg-neutral-700 transition-all duration-200 text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
@@ -106,7 +155,8 @@ const Cart: React.FC = () => {
               {/* Remove Button */}
               <button
                 onClick={() => removeFromCart(item.id)}
-                className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-neutral-600 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+                disabled={loading}
+                className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-neutral-600 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 disabled:opacity-30"
                 aria-label={`Remove ${item.name}`}
               >
                 <svg
@@ -139,7 +189,7 @@ const Cart: React.FC = () => {
 
           {/* Checkout Button */}
           <Link to="/checkout" className="block">
-            <Button variant="secondary" size="lg" fullWidth>
+            <Button variant="secondary" size="lg" fullWidth disabled={loading}>
               Proceed to Checkout
             </Button>
           </Link>

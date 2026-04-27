@@ -1,20 +1,41 @@
 import React, { useState, useCallback } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { useCart } from '../store/CartContext';
 
 const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, user, logout } = useAuth();
+  const { totalItems } = useCart();
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   /** Highlight the active route link */
   const isActive = (path: string) => location.pathname === path;
 
-  const navLinks = [
+  const handleLogout = useCallback(() => {
+    logout();
+    closeMobile();
+    navigate('/');
+  }, [logout, closeMobile, navigate]);
+
+  /* ── Links for guests ── */
+  const guestLinks = [
     { to: '/', label: 'Home' },
     { to: '/login', label: 'Sign In' },
     { to: '/signup', label: 'Sign Up' },
   ];
+
+  /* ── Links for authenticated users ── */
+  const authLinks = [
+    { to: '/', label: 'Home' },
+    { to: '/cart', label: 'Cart' },
+    { to: '/orders', label: 'Orders' },
+  ];
+
+  const navLinks = isAuthenticated ? authLinks : guestLinks;
 
   return (
     <nav className="bg-neutral-950/90 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-neutral-800">
@@ -38,17 +59,40 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center gap-3">
             {navLinks.map((link) => (
               <Link
-                key={link.to}
+                key={link.to + link.label}
                 to={link.to}
-                className={`btn-primary text-sm px-5 py-2 rounded-lg transition-all duration-200 hover:scale-105 ${
+                className={`relative btn-primary text-sm px-5 py-2 rounded-lg transition-all duration-200 hover:scale-105 ${
                   isActive(link.to)
                     ? 'ring-2 ring-primary-300 ring-offset-2 ring-offset-neutral-950'
                     : ''
                 }`}
               >
                 {link.label}
+                {/* Cart badge */}
+                {link.label === 'Cart' && totalItems > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                    {totalItems > 99 ? '99+' : totalItems}
+                  </span>
+                )}
               </Link>
             ))}
+
+            {/* ── Authenticated user info + Logout ── */}
+            {isAuthenticated && (
+              <>
+                {user && (
+                  <span className="text-xs text-neutral-500 px-2">
+                    Hi, <span className="text-primary-400 font-medium">{user.name?.split(' ')[0]}</span>
+                  </span>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="btn-primary text-sm px-5 py-2 rounded-lg transition-all duration-200 hover:scale-105 !bg-red-500/20 !text-red-400 hover:!bg-red-500/30"
+                >
+                  Logout
+                </button>
+              </>
+            )}
           </div>
 
           {/* ── Mobile Menu Toggle ── */}
@@ -97,20 +141,34 @@ const Navbar: React.FC = () => {
       {/* ── Mobile Dropdown Menu ── */}
       <div
         className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          mobileOpen ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0'
+          mobileOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         <div className="px-4 pb-4 pt-2 space-y-2 bg-neutral-900 border-t border-neutral-800">
           {navLinks.map((link) => (
             <Link
-              key={link.to}
+              key={link.to + link.label}
               to={link.to}
               onClick={closeMobile}
-              className="block btn-primary text-sm text-center px-4 py-3 min-h-[44px] rounded-xl font-medium transition-all duration-200"
+              className="relative block btn-primary text-sm text-center px-4 py-3 min-h-[44px] rounded-xl font-medium transition-all duration-200"
             >
               {link.label}
+              {/* Cart badge (mobile) */}
+              {link.label === 'Cart' && totalItems > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full px-1">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
             </Link>
           ))}
+          {isAuthenticated && (
+            <button
+              onClick={handleLogout}
+              className="w-full block text-sm text-center px-4 py-3 min-h-[44px] rounded-xl font-medium transition-all duration-200 bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20"
+            >
+              Logout
+            </button>
+          )}
         </div>
       </div>
     </nav>

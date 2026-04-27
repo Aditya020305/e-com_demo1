@@ -5,7 +5,7 @@ import Button from './ui/Button';
 
 /* ── Types ── */
 export interface ProductData {
-  id: number;
+  id: number | string;
   name: string;
   price: number;
   originalPrice?: number;
@@ -53,15 +53,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     : null;
 
   const handleAddToCart = useCallback(
-    (e: React.MouseEvent) => {
+    async (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-      });
+      await addToCart(String(product.id));
       setAddedFeedback(true);
       setTimeout(() => setAddedFeedback(false), 1200);
     },

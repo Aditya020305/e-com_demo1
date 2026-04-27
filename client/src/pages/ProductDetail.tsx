@@ -1,186 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../store/CartContext';
+import { getProductById } from '../services/productService';
+import type { ApiProduct } from '../services/productService';
 import Button from '../components/ui/Button';
-
-/* ── Types ── */
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  category: string;
-  rating: number;
-  reviews: number;
-  badge?: string;
-  description: string;
-  features: string[];
-}
-
-/* ── Mock Data ── */
-const PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: 'Noir Pro Headphones',
-    price: 249.99,
-    originalPrice: 349.99,
-    image: '/products/headphones.png',
-    category: 'Audio',
-    rating: 4.8,
-    reviews: 324,
-    badge: 'Best Seller',
-    description:
-      'Experience unparalleled sound quality with the Noir Pro Headphones. Featuring active noise cancellation, 40mm custom drivers, and up to 30 hours of battery life. The premium memory foam ear cushions provide all-day comfort, while the matte black finish with gold accents adds a touch of luxury.',
-    features: [
-      'Active Noise Cancellation (ANC)',
-      '40mm custom-tuned drivers',
-      '30-hour battery life',
-      'Bluetooth 5.3 connectivity',
-      'Premium memory foam cushions',
-      'Foldable design with carry case',
-    ],
-  },
-  {
-    id: 2,
-    name: 'Luxe Smartwatch',
-    price: 399.99,
-    image: '/products/watch.png',
-    category: 'Wearables',
-    rating: 4.9,
-    reviews: 518,
-    badge: 'New',
-    description:
-      'The Luxe Smartwatch combines cutting-edge technology with timeless elegance. Track your fitness, monitor your health, and stay connected — all from your wrist. AMOLED display, titanium case, and sapphire crystal glass make this watch as durable as it is beautiful.',
-    features: [
-      '1.4" AMOLED always-on display',
-      'Titanium case with sapphire crystal',
-      'Heart rate & SpO2 monitoring',
-      '5ATM water resistance',
-      '7-day battery life',
-      'GPS + NFC payments',
-    ],
-  },
-  {
-    id: 3,
-    name: 'Urban Stealth Sneakers',
-    price: 189.99,
-    originalPrice: 229.99,
-    image: '/products/sneakers.png',
-    category: 'Footwear',
-    rating: 4.7,
-    reviews: 206,
-    description:
-      'Step into the future with Urban Stealth Sneakers. Engineered with responsive cushioning and breathable knit uppers, these sneakers deliver unmatched comfort for all-day wear. The black and gold colorway makes a bold statement on any occasion.',
-    features: [
-      'Responsive foam midsole',
-      'Breathable knit upper',
-      'Rubber outsole with traction pattern',
-      'Padded collar and tongue',
-      'Pull-tab for easy on/off',
-      'Available in sizes 6–13',
-    ],
-  },
-  {
-    id: 4,
-    name: 'Heritage Leather Bag',
-    price: 299.99,
-    image: '/products/bag.png',
-    category: 'Accessories',
-    rating: 4.6,
-    reviews: 142,
-    description:
-      'Crafted from full-grain Italian leather, the Heritage Bag is built to last a lifetime. Multiple compartments keep you organized, while the adjustable shoulder strap and top handles give you versatile carrying options. Ages beautifully with a rich patina over time.',
-    features: [
-      'Full-grain Italian leather',
-      'Padded 15" laptop compartment',
-      'Brass hardware with gold finish',
-      'Adjustable shoulder strap',
-      'Interior organizer pockets',
-      'Dust bag included',
-    ],
-  },
-  {
-    id: 5,
-    name: 'Aviator Gold Sunglasses',
-    price: 159.99,
-    originalPrice: 199.99,
-    image: '/products/sunglasses.png',
-    category: 'Eyewear',
-    rating: 4.5,
-    reviews: 97,
-    badge: 'Sale',
-    description:
-      'Classic aviator silhouette reimagined with modern materials. Lightweight titanium frame with 24K gold-plated accents. Polarized lenses provide 100% UV protection while reducing glare for crystal-clear vision.',
-    features: [
-      'Polarized UV400 lenses',
-      'Lightweight titanium frame',
-      '24K gold-plated accents',
-      'Spring hinges for comfort',
-      'Anti-scratch lens coating',
-      'Premium hard case included',
-    ],
-  },
-  {
-    id: 6,
-    name: 'Shadow Wireless Earbuds',
-    price: 129.99,
-    image: '/products/earbuds.png',
-    category: 'Audio',
-    rating: 4.4,
-    reviews: 263,
-    description:
-      'Ultra-compact true wireless earbuds with deep bass and crystal-clear mids. The ergonomic design fits securely in your ear for workouts, commutes, and everything in between. Touch controls and voice assistant support make them effortless to use.',
-    features: [
-      'True wireless with Bluetooth 5.2',
-      '8-hour playtime (32 with case)',
-      'IPX5 sweat & water resistant',
-      'Touch controls',
-      'Ambient mode & ANC',
-      'Wireless charging case',
-    ],
-  },
-  {
-    id: 7,
-    name: 'Atlas Travel Backpack',
-    price: 179.99,
-    image: '/products/backpack.png',
-    category: 'Bags',
-    rating: 4.8,
-    reviews: 185,
-    badge: 'Trending',
-    description:
-      'Designed for the modern traveler, the Atlas Backpack features a TSA-friendly laptop compartment, anti-theft hidden pockets, and water-resistant fabric. Expandable design goes from 25L to 35L for maximum flexibility.',
-    features: [
-      'Expandable 25L–35L capacity',
-      'TSA-friendly laptop compartment',
-      'Anti-theft hidden back pocket',
-      'Water-resistant 900D fabric',
-      'USB charging port',
-      'Luggage pass-through strap',
-    ],
-  },
-  {
-    id: 8,
-    name: 'Monarch Leather Wallet',
-    price: 89.99,
-    originalPrice: 119.99,
-    image: '/products/wallet.png',
-    category: 'Accessories',
-    rating: 4.3,
-    reviews: 74,
-    description:
-      'The Monarch Wallet is a slim bifold crafted from top-grain leather with RFID-blocking technology. Eight card slots, two bill compartments, and an ID window keep everything organized without the bulk.',
-    features: [
-      'Top-grain leather construction',
-      'RFID-blocking technology',
-      '8 card slots + 2 bill sections',
-      'ID window',
-      'Slim bifold design',
-      'Gift box packaging',
-    ],
-  },
-];
 
 /* ── Star Rating ── */
 const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
@@ -199,28 +22,119 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
   </div>
 );
 
+/* ── Fallback product image ── */
+const FALLBACK_IMAGE = '/products/headphones.png';
+
+/* ── Skeleton loader for Product Detail ── */
+const ProductDetailSkeleton: React.FC = () => (
+  <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-12">
+      {/* Breadcrumb skeleton */}
+      <div className="flex items-center gap-2 mb-8">
+        <div className="h-4 w-12 rounded bg-neutral-800 animate-pulse" />
+        <span className="text-neutral-700">/</span>
+        <div className="h-4 w-16 rounded bg-neutral-800 animate-pulse" />
+        <span className="text-neutral-700">/</span>
+        <div className="h-4 w-32 rounded bg-neutral-800 animate-pulse" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        {/* Image skeleton */}
+        <div className="rounded-xl border border-neutral-800 bg-neutral-800/50 aspect-square animate-pulse" />
+
+        {/* Details skeleton */}
+        <div className="flex flex-col">
+          <div className="h-3 w-20 rounded bg-neutral-800 animate-pulse mb-2" />
+          <div className="h-8 w-3/4 rounded bg-neutral-800 animate-pulse mb-4" />
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-4 w-24 rounded bg-neutral-800 animate-pulse" />
+            <div className="h-4 w-8 rounded bg-neutral-800 animate-pulse" />
+            <div className="h-4 w-20 rounded bg-neutral-800 animate-pulse" />
+          </div>
+          <div className="flex items-baseline gap-3 mb-6 pb-6 border-b border-neutral-800">
+            <div className="h-8 w-24 rounded bg-neutral-800 animate-pulse" />
+            <div className="h-5 w-16 rounded bg-neutral-800 animate-pulse" />
+          </div>
+          <div className="flex gap-1 mb-4">
+            <div className="h-9 w-28 rounded-lg bg-neutral-800 animate-pulse" />
+            <div className="h-9 w-24 rounded-lg bg-neutral-800 animate-pulse" />
+          </div>
+          <div className="space-y-2 mb-8 min-h-[120px]">
+            <div className="h-4 w-full rounded bg-neutral-800 animate-pulse" />
+            <div className="h-4 w-full rounded bg-neutral-800 animate-pulse" />
+            <div className="h-4 w-5/6 rounded bg-neutral-800 animate-pulse" />
+            <div className="h-4 w-2/3 rounded bg-neutral-800 animate-pulse" />
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="h-12 w-32 rounded-xl bg-neutral-800 animate-pulse" />
+            <div className="h-12 flex-1 rounded-xl bg-neutral-800 animate-pulse" />
+            <div className="h-12 w-12 rounded-xl bg-neutral-800 animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
 /* ========================================
-   Product Detail Page
+   Product Detail Page — API-Integrated
    ======================================== */
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+
+  const [product, setProduct] = useState<ApiProduct | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [activeTab, setActiveTab] = useState<'description' | 'features'>('description');
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const delay = Math.floor(Math.random() * 300) + 500; // 500–800ms
-    const timer = setTimeout(() => setLoading(false), delay);
-    return () => clearTimeout(timer);
+  /* ── Fetch product from API ── */
+  const fetchProduct = useCallback(async () => {
+    if (!id) {
+      setError('Invalid product ID');
+      setLoading(false);
+      return;
+    }
+
+    // Validate MongoDB ObjectId format
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    if (!objectIdRegex.test(id)) {
+      setError('Invalid product ID format');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await getProductById(id);
+      setProduct(data);
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to load product';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
-  const product = PRODUCTS.find((p) => p.id === Number(id));
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]);
 
-  /* Not found */
-  if (!product) {
+  /* ── Loading state ── */
+  if (loading) {
+    return <ProductDetailSkeleton />;
+  }
+
+  /* ── Error / Not found ── */
+  if (error || !product) {
     return (
       <section className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-neutral-900 px-4">
         <div className="text-center">
@@ -230,7 +144,9 @@ const ProductDetail: React.FC = () => {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-neutral-100 mb-2">Product Not Found</h1>
-          <p className="text-neutral-500 mb-8">The product you're looking for doesn't exist or has been removed.</p>
+          <p className="text-neutral-500 mb-8">
+            {error || "The product you're looking for doesn't exist or has been removed."}
+          </p>
           <Button
             onClick={() => navigate('/')}
             variant="primary"
@@ -243,81 +159,23 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : null;
+  /* ── Derived values ── */
+  const productImage =
+    product.images && product.images.length > 0 ? product.images[0] : FALLBACK_IMAGE;
 
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-      });
-    }
+  // Build a features list from the product description
+  const productFeatures = product.description
+    ? product.description
+        .split(/[.!]\s+/)
+        .filter((s) => s.trim().length > 5)
+        .slice(0, 6)
+    : [];
+
+  const handleAddToCart = async () => {
+    await addToCart(product._id);
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };
-
-  if (loading) {
-    return (
-      <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-12">
-          {/* Breadcrumb skeleton */}
-          <div className="flex items-center gap-2 mb-8">
-            <div className="h-4 w-12 rounded bg-neutral-800 animate-pulse" />
-            <span className="text-neutral-700">/</span>
-            <div className="h-4 w-16 rounded bg-neutral-800 animate-pulse" />
-            <span className="text-neutral-700">/</span>
-            <div className="h-4 w-32 rounded bg-neutral-800 animate-pulse" />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            {/* Image skeleton */}
-            <div className="rounded-xl border border-neutral-800 bg-neutral-800/50 aspect-square animate-pulse" />
-
-            {/* Details skeleton */}
-            <div className="flex flex-col">
-              {/* Category */}
-              <div className="h-3 w-20 rounded bg-neutral-800 animate-pulse mb-2" />
-              {/* Title */}
-              <div className="h-8 w-3/4 rounded bg-neutral-800 animate-pulse mb-4" />
-              {/* Rating */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-4 w-24 rounded bg-neutral-800 animate-pulse" />
-                <div className="h-4 w-8 rounded bg-neutral-800 animate-pulse" />
-                <div className="h-4 w-20 rounded bg-neutral-800 animate-pulse" />
-              </div>
-              {/* Price */}
-              <div className="flex items-baseline gap-3 mb-6 pb-6 border-b border-neutral-800">
-                <div className="h-8 w-24 rounded bg-neutral-800 animate-pulse" />
-                <div className="h-5 w-16 rounded bg-neutral-800 animate-pulse" />
-              </div>
-              {/* Tabs */}
-              <div className="flex gap-1 mb-4">
-                <div className="h-9 w-28 rounded-lg bg-neutral-800 animate-pulse" />
-                <div className="h-9 w-24 rounded-lg bg-neutral-800 animate-pulse" />
-              </div>
-              {/* Description lines */}
-              <div className="space-y-2 mb-8 min-h-[120px]">
-                <div className="h-4 w-full rounded bg-neutral-800 animate-pulse" />
-                <div className="h-4 w-full rounded bg-neutral-800 animate-pulse" />
-                <div className="h-4 w-5/6 rounded bg-neutral-800 animate-pulse" />
-                <div className="h-4 w-2/3 rounded bg-neutral-800 animate-pulse" />
-              </div>
-              {/* Action buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="h-12 w-32 rounded-xl bg-neutral-800 animate-pulse" />
-                <div className="h-12 flex-1 rounded-xl bg-neutral-800 animate-pulse" />
-                <div className="h-12 w-12 rounded-xl bg-neutral-800 animate-pulse" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
@@ -336,25 +194,13 @@ const ProductDetail: React.FC = () => {
           {/* ── LEFT: Image ── */}
           <div className="relative">
             <div className="sticky top-24 rounded-xl border border-neutral-800 bg-neutral-800/50 overflow-hidden aspect-square">
-              {/* Badge */}
-              {product.badge && (
-                <div className={`absolute top-4 left-4 z-10 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider ${
-                  product.badge === 'Sale'
-                    ? 'bg-red-500/90 text-white'
-                    : product.badge === 'New'
-                    ? 'bg-emerald-500/90 text-white'
-                    : 'bg-primary-500/90 text-neutral-900'
-                }`}>
-                  {product.badge}
-                </div>
-              )}
-              {discount && (
-                <div className="absolute top-4 right-4 z-10 px-3 py-1.5 rounded-lg bg-red-500/90 text-white text-xs font-bold">
-                  -{discount}%
+              {product.stock === 0 && (
+                <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-lg bg-red-500/90 text-white text-xs font-bold uppercase tracking-wider">
+                  Out of Stock
                 </div>
               )}
               <img
-                src={product.image}
+                src={productImage}
                 alt={product.name}
                 className="h-full w-full object-cover hover:scale-105 transition-transform duration-500"
               />
@@ -375,22 +221,28 @@ const ProductDetail: React.FC = () => {
 
             {/* Rating */}
             <div className="flex items-center gap-3 mb-6">
-              <StarRating rating={product.rating} />
-              <span className="text-sm text-primary-400 font-semibold">{product.rating}</span>
-              <span className="text-sm text-neutral-500">({product.reviews} reviews)</span>
+              <StarRating rating={4.5} />
+              <span className="text-sm text-primary-400 font-semibold">4.5</span>
+              <span className="text-sm text-neutral-500">
+                {product.stock > 0
+                  ? `${product.stock} in stock`
+                  : 'Out of stock'}
+              </span>
             </div>
+
+            {/* Vendor */}
+            {product.vendor && (
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xs text-neutral-500">Sold by:</span>
+                <span className="text-xs font-semibold text-primary-400">
+                  {product.vendor.name}
+                </span>
+              </div>
+            )}
 
             {/* Price */}
             <div className="flex flex-wrap items-baseline gap-2 sm:gap-3 mb-6 pb-6 border-b border-neutral-800">
               <span className="text-2xl sm:text-3xl font-bold text-primary-400">₹{product.price}</span>
-              {product.originalPrice && (
-                <>
-                  <span className="text-lg text-neutral-500 line-through">₹{product.originalPrice}</span>
-                  <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-400 text-xs font-bold">
-                    Save ₹{(product.originalPrice - product.price).toFixed(2)}
-                  </span>
-                </>
-              )}
             </div>
 
             {/* Tabs */}
@@ -405,16 +257,18 @@ const ProductDetail: React.FC = () => {
               >
                 Description
               </button>
-              <button
-                onClick={() => setActiveTab('features')}
-                className={`px-4 py-2 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 ${
-                  activeTab === 'features'
-                    ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
-                    : 'text-neutral-500 hover:text-neutral-300'
-                }`}
-              >
-                Features
-              </button>
+              {productFeatures.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('features')}
+                  className={`px-4 py-2 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === 'features'
+                      ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
+                      : 'text-neutral-500 hover:text-neutral-300'
+                  }`}
+                >
+                  Highlights
+                </button>
+              )}
             </div>
 
             {/* Tab Content */}
@@ -425,12 +279,12 @@ const ProductDetail: React.FC = () => {
                 </p>
               ) : (
                 <ul className="space-y-2">
-                  {product.features.map((feature, i) => (
+                  {productFeatures.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-neutral-400">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary-400 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
-                      {feature}
+                      {feature.trim()}
                     </li>
                   ))}
                 </ul>
@@ -453,7 +307,7 @@ const ProductDetail: React.FC = () => {
                   {quantity}
                 </span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(Math.min(product.stock || 99, quantity + 1))}
                   className="px-4 py-3 min-h-[44px] text-neutral-400 hover:text-primary-400 hover:bg-neutral-700 transition-all duration-200"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -472,6 +326,7 @@ const ProductDetail: React.FC = () => {
                     ? '!bg-emerald-500 !border-emerald-500 !text-white !shadow-lg'
                     : ''
                 }`}
+                disabled={product.stock === 0}
               >
                 {addedToCart ? (
                   <>
@@ -485,7 +340,7 @@ const ProductDetail: React.FC = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
                     </svg>
-                    Add to Cart
+                    {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                   </>
                 )}
               </Button>
@@ -499,6 +354,7 @@ const ProductDetail: React.FC = () => {
                 variant="primary"
                 size="lg"
                 className="flex-1"
+                disabled={product.stock === 0}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />

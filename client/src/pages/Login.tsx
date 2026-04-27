@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 
 /* ── Types ── */
@@ -91,12 +92,16 @@ const IconDocument: React.FC = () => (
    Login Page
    ======================================== */
 const Login: React.FC = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
   const [form, setForm] = useState<FormState>({ email: '', password: '' });
   const [errors, setErrors] = useState<ErrorState>({});
   const [touched, setTouched] = useState<TouchedState>({ email: false, password: false });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const currentErrors = validateForm(form);
   const hasErrors = Object.keys(currentErrors).length > 0;
@@ -125,19 +130,26 @@ const Login: React.FC = () => {
   }, []);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
       setSubmitAttempted(true);
+      setApiError(null);
       const validationErrors = validateForm(form);
       setErrors(validationErrors);
       if (Object.keys(validationErrors).length > 0) return;
       setIsLoading(true);
-      setTimeout(() => {
-        console.log('✅ Login submitted:', { email: form.email, password: form.password });
+      try {
+        await login(form.email, form.password);
+        navigate('/');
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message || 'Login failed. Please try again.';
+        setApiError(message);
+      } finally {
         setIsLoading(false);
-      }, 1500);
+      }
     },
-    [form],
+    [form, login, navigate],
   );
 
   const inputBorder = (field: keyof ErrorState) =>
@@ -277,6 +289,16 @@ const Login: React.FC = () => {
                 Forgot Password?
               </a>
             </div>
+
+            {/* API Error */}
+            {apiError && (
+              <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {apiError}
+              </div>
+            )}
 
             {/* Login Button */}
             <div className="pt-1">

@@ -1,116 +1,82 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import ProductCard from '../components/ProductCard';
 import type { ProductData } from '../components/ProductCard';
 import SkeletonCard from '../components/ui/SkeletonCard';
 import EmptyState from '../components/ui/EmptyState';
+import { getProducts } from '../services/productService';
+import type { ApiProduct } from '../services/productService';
 
-/* ── Mock Data ── */
-const PRODUCTS: ProductData[] = [
-  {
-    id: 1,
-    name: 'Noir Pro Headphones',
-    price: 249.99,
-    originalPrice: 349.99,
-    image: '/products/headphones.png',
-    category: 'Audio',
-    rating: 4.8,
-    reviews: 324,
-    badge: 'Best Seller',
-  },
-  {
-    id: 2,
-    name: 'Luxe Smartwatch',
-    price: 399.99,
-    image: '/products/watch.png',
-    category: 'Wearables',
-    rating: 4.9,
-    reviews: 518,
-    badge: 'New',
-  },
-  {
-    id: 3,
-    name: 'Urban Stealth Sneakers',
-    price: 189.99,
-    originalPrice: 229.99,
-    image: '/products/sneakers.png',
-    category: 'Footwear',
-    rating: 4.7,
-    reviews: 206,
-  },
-  {
-    id: 4,
-    name: 'Heritage Leather Bag',
-    price: 299.99,
-    image: '/products/bag.png',
-    category: 'Accessories',
-    rating: 4.6,
-    reviews: 142,
-  },
-  {
-    id: 5,
-    name: 'Aviator Gold Sunglasses',
-    price: 159.99,
-    originalPrice: 199.99,
-    image: '/products/sunglasses.png',
-    category: 'Eyewear',
-    rating: 4.5,
-    reviews: 97,
-    badge: 'Sale',
-  },
-  {
-    id: 6,
-    name: 'Shadow Wireless Earbuds',
-    price: 129.99,
-    image: '/products/earbuds.png',
-    category: 'Audio',
-    rating: 4.4,
-    reviews: 263,
-  },
-  {
-    id: 7,
-    name: 'Atlas Travel Backpack',
-    price: 179.99,
-    image: '/products/backpack.png',
-    category: 'Bags',
-    rating: 4.8,
-    reviews: 185,
-    badge: 'Trending',
-  },
-  {
-    id: 8,
-    name: 'Monarch Leather Wallet',
-    price: 89.99,
-    originalPrice: 119.99,
-    image: '/products/wallet.png',
-    category: 'Accessories',
-    rating: 4.3,
-    reviews: 74,
-  },
-];
+/* ── Fallback product image ── */
+const FALLBACK_IMAGE = '/products/headphones.png';
 
-const CATEGORIES = ['All', 'Audio', 'Wearables', 'Footwear', 'Accessories', 'Eyewear', 'Bags'];
+/* ── Map API product to UI ProductData ── */
+const mapProduct = (p: ApiProduct): ProductData => ({
+  id: p._id,
+  name: p.name,
+  price: p.price,
+  image: p.images && p.images.length > 0 ? p.images[0] : FALLBACK_IMAGE,
+  category: p.category,
+  rating: 4.5,
+  reviews: 0,
+});
 
 /* ========================================
    Home Page
    ======================================== */
 const Home: React.FC = () => {
+  const [products, setProducts] = useState<ProductData[]>([]);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>(['All']);
 
-  useEffect(() => {
-    const delay = Math.floor(Math.random() * 200) + 1000;
-    const timer = setTimeout(() => setLoading(false), delay);
-    return () => clearTimeout(timer);
+  const fetchProducts = useCallback(async (keyword?: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getProducts(keyword, undefined, 1, 50);
+      const mapped = response.data.products.map(mapProduct);
+      setProducts(mapped);
+
+      // Extract unique categories from API data
+      const cats = ['All', ...Array.from(new Set(mapped.map((p) => p.category)))];
+      setCategories(cats);
+    } catch {
+      setError('Failed to load products');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filteredProducts = PRODUCTS.filter((p) => {
-    const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const handleSearch = useCallback(() => {
+    setActiveCategory('All');
+    fetchProducts(searchTerm || undefined);
+  }, [searchTerm, fetchProducts]);
+
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') handleSearch();
+    },
+    [handleSearch],
+  );
+
+  const handleClearSearch = useCallback(() => {
+    setSearchTerm('');
+    setActiveCategory('All');
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const filteredProducts =
+    activeCategory === 'All'
+      ? products
+      : products.filter((p) => p.category === activeCategory);
 
   return (
     <div className="bg-neutral-900 min-h-screen">
@@ -214,12 +180,13 @@ const Home: React.FC = () => {
               placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               className="w-full pl-10 pr-10 py-3 rounded-lg border border-neutral-700 bg-neutral-800/80 text-neutral-100 placeholder-neutral-500 text-sm focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 min-h-[44px]"
             />
             {/* Clear Button */}
             {searchTerm && (
               <button
-                onClick={() => setSearchTerm('')}
+                onClick={handleClearSearch}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors duration-200"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -232,7 +199,7 @@ const Home: React.FC = () => {
 
         {/* Category Filter */}
         <div className="flex gap-2 mb-10 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center scrollbar-hide">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
@@ -253,6 +220,29 @@ const Home: React.FC = () => {
               <SkeletonCard key={i} />
             ))}
           </div>
+        ) : error ? (
+          <EmptyState
+            icon={
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-10 w-10 text-red-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            }
+            title="Failed to load products"
+            description="Something went wrong. Please try again."
+            actionLabel="Retry"
+            onAction={() => fetchProducts()}
+          />
         ) : filteredProducts.length === 0 ? (
           <EmptyState
             icon={
@@ -274,10 +264,7 @@ const Home: React.FC = () => {
             title="No products found"
             description="Try adjusting your search or filters"
             actionLabel="Clear Filters"
-            onAction={() => {
-              setSearchTerm('');
-              setActiveCategory('All');
-            }}
+            onAction={handleClearSearch}
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -289,7 +276,17 @@ const Home: React.FC = () => {
 
         {/* View All */}
         <div className="text-center mt-12">
-          <Button variant="outline" size="lg">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              // Clear any active filters to show all products
+              setActiveCategory('All');
+              setSearchTerm('');
+              fetchProducts();
+            }}
+          >
             View All Products →
           </Button>
         </div>
@@ -309,7 +306,7 @@ const Home: React.FC = () => {
                   </svg>
                 ),
                 title: 'Free Shipping',
-                desc: 'On orders over $100',
+                desc: 'On orders over ₹500',
               },
               {
                 icon: (
@@ -355,4 +352,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-
