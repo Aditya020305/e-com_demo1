@@ -4,12 +4,14 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 /* ── Context ── */
 import { CartProvider } from './store/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { WishlistProvider } from './context/WishlistContext';
 
 /* ── Components ── */
 import Navbar from './components/Navbar';
 
 /* ── Pages ── */
 import Home from './pages/Home';
+import Products from './pages/Products';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import ProductDetail from './pages/ProductDetail';
@@ -17,6 +19,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Orders from './pages/Orders';
+import Wishlist from './pages/Wishlist';
 
 /* ========================================
    Footer Component
@@ -48,6 +51,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
     <BrowserRouter>
+      <WishlistProvider>
       <CartProvider>
         <div className="min-h-screen flex flex-col bg-neutral-900">
           <Navbar />
@@ -55,7 +59,7 @@ const App: React.FC = () => {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/products" element={<Home />} />
+              <Route path="/products" element={<Products />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/product/:id" element={<ProductDetail />} />
@@ -63,12 +67,14 @@ const App: React.FC = () => {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/orders" element={<Orders />} />
+              <Route path="/wishlist" element={<Wishlist />} />
             </Routes>
           </main>
 
           <Footer />
         </div>
       </CartProvider>
+      </WishlistProvider>
     </BrowserRouter>
     </AuthProvider>
   );

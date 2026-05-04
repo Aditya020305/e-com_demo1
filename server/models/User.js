@@ -30,6 +30,31 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    /* ── Fraud Detection Fields ── */
+    totalOrders: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    returnedOrders: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+    // Vendor-specific fraud fields
+    failedOrders: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    isSuspended: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

@@ -1,6 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../store/CartContext';
+import { useAuth } from '../hooks/useAuth';
+import { useWishlist } from '../context/WishlistContext';
 import Button from './ui/Button';
 
 /* ── Types ── */
@@ -45,6 +47,11 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [addedFeedback, setAddedFeedback] = useState(false);
   const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const navigate = useNavigate();
+
+  const wishlisted = isInWishlist(String(product.id));
 
   const discount = product.originalPrice
     ? Math.round(
@@ -56,11 +63,30 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     async (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      if (!isAuthenticated) {
+        navigate('/login');
+        return;
+      }
       await addToCart(String(product.id));
       setAddedFeedback(true);
       setTimeout(() => setAddedFeedback(false), 1200);
     },
-    [addToCart, product],
+    [addToCart, product, isAuthenticated, navigate],
+  );
+
+  const handleToggleWishlist = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleWishlist({
+        id: String(product.id),
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+      });
+    },
+    [toggleWishlist, product],
   );
 
   return (
@@ -128,11 +154,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             'Add to Cart'
           )}
         </Button>
-        <button className="flex items-center justify-center w-9 h-9 rounded-lg bg-neutral-800/80 backdrop-blur-sm text-neutral-300 hover:text-primary-400 border border-neutral-700 transition-all duration-200">
+        <button
+          onClick={handleToggleWishlist}
+          className={`flex items-center justify-center w-9 h-9 rounded-lg backdrop-blur-sm border transition-all duration-200 ${
+            wishlisted
+              ? 'bg-pink-500/20 text-pink-400 border-pink-500/30'
+              : 'bg-neutral-800/80 text-neutral-300 hover:text-pink-400 border-neutral-700'
+          }`}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-4 w-4"
-            fill="none"
+            fill={wishlisted ? 'currentColor' : 'none'}
             viewBox="0 0 24 24"
             stroke="currentColor"
             strokeWidth={2}

@@ -12,6 +12,7 @@ const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const recommendationRoutes = require("./routes/recommendationRoutes");
 
 const app = express();
 
@@ -25,6 +26,7 @@ if (process.env.NODE_ENV === "development") {
 
 app.use("/api/health", healthRoute);
 app.use("/api/auth", authRoutes);
+app.use("/api/products", recommendationRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);

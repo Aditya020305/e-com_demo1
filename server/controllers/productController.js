@@ -31,6 +31,85 @@ const createProduct = async (req, res) => {
   });
 };
 
+/* ── Smart Search: Intent Detection Maps ── */
+const PRICE_INTENTS = [
+  { keywords: ["cheap", "budget", "low", "affordable", "inexpensive", "value"], filter: { price: { $lt: 200 } }, label: "budget" },
+  { keywords: ["mid", "standard", "moderate", "average", "mid-range", "midrange"], filter: { price: { $gte: 200, $lte: 1000 } }, label: "mid-range" },
+  { keywords: ["premium", "expensive", "luxury", "high-end", "highend", "pro", "flagship"], filter: { price: { $gt: 1000 } }, label: "premium" },
+];
+
+const CATEGORY_INTENTS = [
+  { keywords: ["phone", "mobile", "smartphone", "iphone", "android", "samsung", "pixel"], category: "Mobile Phones" },
+  { keywords: ["laptop", "notebook", "macbook", "thinkpad", "ultrabook"], category: "Laptops" },
+  { keywords: ["tablet", "ipad", "surface"], category: "Tablets" },
+  { keywords: ["headphone", "headphones", "earbuds", "earphone", "speaker", "audio", "airpods", "earbud"], category: "Audio" },
+  { keywords: ["watch", "smartwatch", "wearable", "fitbit", "fitness band", "tracker"], category: "Wearables" },
+  { keywords: ["camera", "gopro", "dslr", "mirrorless", "photography"], category: "Cameras" },
+  { keywords: ["gaming", "console", "playstation", "xbox", "nintendo", "controller", "gamepad"], category: "Gaming" },
+  { keywords: ["appliance", "vacuum", "tv", "television", "robot"], category: "Home Appliances" },
+  { keywords: ["kitchen", "mixer", "blender", "cooker", "espresso", "coffee"], category: "Kitchen Appliances" },
+  { keywords: ["men", "menswear", "jacket", "shirt", "jeans"], category: "Fashion (Men)" },
+  { keywords: ["women", "womenswear", "dress", "legging", "leggings", "handbag", "purse"], category: "Fashion (Women)" },
+  { keywords: ["shoe", "shoes", "sneaker", "sneakers", "boots", "footwear", "running shoe"], category: "Footwear" },
+  { keywords: ["accessory", "accessories", "sunglasses", "backpack", "bag", "wallet"], category: "Accessories" },
+  { keywords: ["furniture", "chair", "desk", "shelf", "table", "nightstand", "sofa"], category: "Furniture" },
+  { keywords: ["book", "books", "novel", "reading"], category: "Books" },
+  { keywords: ["beauty", "skincare", "makeup", "shaver", "hair", "cosmetic", "moisturizer"], category: "Beauty & Personal Care" },
+  { keywords: ["sport", "sports", "fitness", "gym", "yoga", "dumbbell", "bike", "cycling", "workout"], category: "Sports & Fitness" },
+  { keywords: ["office", "mouse", "monitor", "keyboard", "stationery", "ergonomic"], category: "Office Supplies" },
+];
+
+/**
+ * parseSmartKeyword — Extracts price intent, category intent, and remaining
+ * text search terms from a natural-language keyword string.
+ * Returns { priceFilter, detectedCategory, searchTerms, labels }
+ */
+const parseSmartKeyword = (keyword) => {
+  const words = keyword.toLowerCase().split(/\s+/);
+  let priceFilter = null;
+  let detectedCategory = null;
+  const remainingWords = [];
+  const labels = [];
+
+  for (const word of words) {
+    let matched = false;
+
+    // Check price intent
+    for (const intent of PRICE_INTENTS) {
+      if (intent.keywords.includes(word)) {
+        priceFilter = intent.filter;
+        labels.push(intent.label);
+        matched = true;
+        break;
+      }
+    }
+
+    // Check category intent
+    if (!matched) {
+      for (const intent of CATEGORY_INTENTS) {
+        if (intent.keywords.includes(word)) {
+          detectedCategory = intent.category;
+          labels.push(intent.category);
+          matched = true;
+          break;
+        }
+      }
+    }
+
+    // Keep unmatched words for text search
+    if (!matched) {
+      remainingWords.push(word);
+    }
+  }
+
+  return {
+    priceFilter,
+    detectedCategory,
+    searchTerms: remainingWords.join(" ").trim(),
+    labels,
+  };
+};
+
 const getProducts = async (req, res) => {
   const { keyword, category, page = 1, limit = 10 } = req.query;
 
@@ -38,11 +117,42 @@ const getProducts = async (req, res) => {
   const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
 
   const filter = { isActive: true };
+  let searchInterpretation = null;
 
   if (keyword) {
-    filter.$text = { $search: keyword };
+    const parsed = parseSmartKeyword(keyword);
+
+    // Apply detected category (only if no explicit category query param)
+    if (parsed.detectedCategory && !category) {
+      filter.category = parsed.detectedCategory;
+    }
+
+    // Apply price filter
+    if (parsed.priceFilter) {
+      Object.assign(filter, parsed.priceFilter);
+    }
+
+    // Apply text search only on remaining unmatched terms
+    if (parsed.searchTerms) {
+      filter.$or = [
+        { name: { $regex: parsed.searchTerms, $options: "i" } },
+        { description: { $regex: parsed.searchTerms, $options: "i" } },
+      ];
+    } else if (!parsed.detectedCategory && !parsed.priceFilter) {
+      // No intents matched at all — fallback to full keyword regex
+      filter.$or = [
+        { name: { $regex: keyword, $options: "i" } },
+        { description: { $regex: keyword, $options: "i" } },
+      ];
+    }
+
+    // Build interpretation label for frontend
+    if (parsed.labels.length > 0) {
+      searchInterpretation = parsed.labels.join(" · ");
+    }
   }
 
+  // Explicit category param always takes priority
   if (category) {
     filter.category = category;
   }
@@ -65,6 +175,7 @@ const getProducts = async (req, res) => {
       total,
       page: pageNum,
       totalPages,
+      ...(searchInterpretation && { searchInterpretation }),
     },
   });
 };

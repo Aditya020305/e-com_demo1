@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../store/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -9,6 +10,7 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
   const { totalItems } = useCart();
+  const { wishlistCount } = useWishlist();
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
@@ -31,6 +33,7 @@ const Navbar: React.FC = () => {
   /* ── Links for authenticated users ── */
   const authLinks = [
     { to: '/', label: 'Home' },
+    { to: '/wishlist', label: 'Wishlist' },
     { to: '/cart', label: 'Cart' },
     { to: '/orders', label: 'Orders' },
   ];
@@ -72,6 +75,12 @@ const Navbar: React.FC = () => {
                 {link.label === 'Cart' && totalItems > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
                     {totalItems > 99 ? '99+' : totalItems}
+                  </span>
+                )}
+                {/* Wishlist badge */}
+                {link.label === 'Wishlist' && wishlistCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-pink-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1">
+                    {wishlistCount > 99 ? '99+' : wishlistCount}
                   </span>
                 )}
               </Link>
@@ -157,6 +166,12 @@ const Navbar: React.FC = () => {
               {link.label === 'Cart' && totalItems > 0 && (
                 <span className="ml-2 inline-flex items-center justify-center bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full px-1">
                   {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
+              {/* Wishlist badge (mobile) */}
+              {link.label === 'Wishlist' && wishlistCount > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center bg-pink-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full px-1">
+                  {wishlistCount > 99 ? '99+' : wishlistCount}
                 </span>
               )}
             </Link>

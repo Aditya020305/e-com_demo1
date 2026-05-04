@@ -4,12 +4,14 @@ import Button from '../components/ui/Button';
 import ProductCard from '../components/ProductCard';
 import type { ProductData } from '../components/ProductCard';
 import SkeletonCard from '../components/ui/SkeletonCard';
-import EmptyState from '../components/ui/EmptyState';
 import { getProducts } from '../services/productService';
 import type { ApiProduct } from '../services/productService';
+import { getPreferredCategories, getRecentlyViewed } from '../utils/behaviorTracker';
 
-/* ── Fallback product image ── */
+/* ── Constants ── */
 const FALLBACK_IMAGE = '/products/headphones.png';
+const FEATURED_PRODUCT_COUNT = 8;
+const FEATURED_CATEGORY_COUNT = 5;
 
 /* ── Map API product to UI ProductData ── */
 const mapProduct = (p: ApiProduct): ProductData => ({
@@ -23,27 +25,31 @@ const mapProduct = (p: ApiProduct): ProductData => ({
 });
 
 /* ========================================
-   Home Page
+   Home Page — Curated Featured Content
    ======================================== */
 const Home: React.FC = () => {
-  const [products, setProducts] = useState<ProductData[]>([]);
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [featuredProducts, setFeaturedProducts] = useState<ProductData[]>([]);
+  const [featuredCategories, setFeaturedCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>(['All']);
 
-  const fetchProducts = useCallback(async (keyword?: string) => {
+  /* ── Personalized Recommendations ── */
+  const [personalRecs, setPersonalRecs] = useState<ProductData[]>([]);
+  const [recsAvailable, setRecsAvailable] = useState(false);
+
+  const fetchFeaturedData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await getProducts(keyword, undefined, 1, 50);
-      const mapped = response.data.products.map(mapProduct);
-      setProducts(mapped);
+      const response = await getProducts(undefined, undefined, 1, 50);
+      const allProducts = response.data.products.map(mapProduct);
 
-      // Extract unique categories from API data
-      const cats = ['All', ...Array.from(new Set(mapped.map((p) => p.category)))];
-      setCategories(cats);
+      // Featured products: first N products (newest)
+      setFeaturedProducts(allProducts.slice(0, FEATURED_PRODUCT_COUNT));
+
+      // Featured categories: first N unique categories
+      const uniqueCategories = Array.from(new Set(allProducts.map((p) => p.category)));
+      setFeaturedCategories(uniqueCategories.slice(0, FEATURED_CATEGORY_COUNT));
     } catch {
       setError('Failed to load products');
     } finally {
@@ -52,31 +58,48 @@ const Home: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    fetchFeaturedData();
+  }, [fetchFeaturedData]);
 
-  const handleSearch = useCallback(() => {
-    setActiveCategory('All');
-    fetchProducts(searchTerm || undefined);
-  }, [searchTerm, fetchProducts]);
+  /* ── Fetch personalized recommendations from behavior data ── */
+  useEffect(() => {
+    const preferredCategories = getPreferredCategories();
+    const recentlyViewed = getRecentlyViewed();
 
-  const handleSearchKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') handleSearch();
-    },
-    [handleSearch],
-  );
+    if (preferredCategories.length === 0) {
+      setRecsAvailable(false);
+      return;
+    }
 
-  const handleClearSearch = useCallback(() => {
-    setSearchTerm('');
-    setActiveCategory('All');
-    fetchProducts();
-  }, [fetchProducts]);
+    const fetchPersonalRecs = async () => {
+      try {
+        const viewedSet = new Set(recentlyViewed);
+        const allRecs: ProductData[] = [];
+        const seenIds = new Set<string>();
 
-  const filteredProducts =
-    activeCategory === 'All'
-      ? products
-      : products.filter((p) => p.category === activeCategory);
+        // Fetch from top 3 preferred categories
+        for (const cat of preferredCategories.slice(0, 3)) {
+          const response = await getProducts(undefined, cat, 1, 20);
+          const mapped = response.data.products
+            .filter((p) => !viewedSet.has(p._id) && !seenIds.has(p._id))
+            .map((p) => {
+              seenIds.add(p._id);
+              return mapProduct(p);
+            });
+          allRecs.push(...mapped);
+        }
+
+        if (allRecs.length > 0) {
+          setPersonalRecs(allRecs.slice(0, 8));
+          setRecsAvailable(true);
+        }
+      } catch {
+        // Non-critical — silently fail
+      }
+    };
+
+    fetchPersonalRecs();
+  }, []);
 
   return (
     <div className="bg-neutral-900 min-h-screen">
@@ -115,7 +138,7 @@ const Home: React.FC = () => {
 
             {/* CTA */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/login">
+              <Link to="/products">
                 <Button variant="primary" size="lg">
                   Shop Now
                 </Button>
@@ -148,149 +171,134 @@ const Home: React.FC = () => {
       </section>
 
       {/* ══════════════════════════════════════
-         PRODUCTS SECTION
+         FEATURED CATEGORIES SECTION
          ══════════════════════════════════════ */}
-      <section id="products" className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-20">
-        {/* Section Header */}
-        <div className="text-center mb-12">
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pt-12 sm:pt-16 pb-4">
+        <div className="text-center mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-neutral-100">
-            Featured <span className="text-gradient-gold">Products</span>
+            Featured <span className="text-gradient-gold">Categories</span>
           </h2>
           <p className="mt-3 text-neutral-500 text-sm sm:text-base max-w-xl mx-auto">
-            Handpicked premium products from our top-rated vendors
+            Shop by your favourite category
           </p>
         </div>
 
-        {/* Search Input */}
-        <div className="flex justify-center mb-6">
-          <div className="relative w-full md:w-96">
-            {/* Search Icon */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              className="w-full pl-10 pr-10 py-3 rounded-lg border border-neutral-700 bg-neutral-800/80 text-neutral-100 placeholder-neutral-500 text-sm focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 min-h-[44px]"
-            />
-            {/* Clear Button */}
-            {searchTerm && (
-              <button
-                onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors duration-200"
+        {!loading && (
+          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center scrollbar-hide">
+            {featuredCategories.map((cat) => (
+              <Link
+                key={cat}
+                to="/products"
+                className="px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 whitespace-nowrap min-h-[40px] flex items-center bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-primary-500/30 hover:text-primary-400"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Category Filter */}
-        <div className="flex gap-2 mb-10 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center scrollbar-hide">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 whitespace-nowrap min-h-[40px] flex items-center ${activeCategory === cat
-                ? 'bg-primary-500 text-neutral-900 shadow-gold'
-                : 'bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-primary-500/30 hover:text-primary-400'
-                }`}
+                {cat}
+              </Link>
+            ))}
+            <Link
+              to="/products"
+              className="px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 whitespace-nowrap min-h-[40px] flex items-center bg-primary-500/10 text-primary-400 border border-primary-500/30 hover:bg-primary-500/20"
             >
-              {cat}
-            </button>
-          ))}
+              View All →
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* ══════════════════════════════════════
+         FEATURED PRODUCTS SECTION
+         ══════════════════════════════════════ */}
+      <section id="products" className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16">
+        {/* Section Header */}
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-neutral-100">
+              Featured <span className="text-gradient-gold">Products</span>
+            </h2>
+            <p className="mt-2 text-neutral-500 text-sm sm:text-base">
+              Handpicked premium products from our top-rated vendors
+            </p>
+          </div>
+          <Link
+            to="/products"
+            className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors duration-200"
+          >
+            View All
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+          </Link>
         </div>
 
         {/* Product Grid */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: FEATURED_PRODUCT_COUNT }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
         ) : error ? (
-          <EmptyState
-            icon={
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-10 w-10 text-red-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            }
-            title="Failed to load products"
-            description="Something went wrong. Please try again."
-            actionLabel="Retry"
-            onAction={() => fetchProducts()}
-          />
-        ) : filteredProducts.length === 0 ? (
-          <EmptyState
-            icon={
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-10 w-10 text-neutral-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            }
-            title="No products found"
-            description="Try adjusting your search or filters"
-            actionLabel="Clear Filters"
-            onAction={handleClearSearch}
-          />
+          <div className="text-center py-12">
+            <p className="text-red-400 mb-4">Failed to load products</p>
+            <Button variant="outline" size="sm" onClick={() => fetchFeaturedData()}>
+              Retry
+            </Button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
+            {featuredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
         )}
 
-        {/* View All */}
+        {/* View All Products CTA */}
         <div className="text-center mt-12">
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-              // Clear any active filters to show all products
-              setActiveCategory('All');
-              setSearchTerm('');
-              fetchProducts();
-            }}
-          >
-            View All Products →
-          </Button>
+          <Link to="/products">
+            <Button variant="outline" size="lg">
+              View All Products →
+            </Button>
+          </Link>
         </div>
       </section>
+
+      {/* ══════════════════════════════════════
+         RECOMMENDED FOR YOU
+         ══════════════════════════════════════ */}
+      {recsAvailable && personalRecs.length > 0 && (
+        <section className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16">
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                </svg>
+                <span className="text-[10px] font-bold text-primary-400 uppercase tracking-widest">Personalized</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-neutral-100">
+                Recommended <span className="text-gradient-gold">for You</span>
+              </h2>
+              <p className="mt-2 text-neutral-500 text-sm sm:text-base">
+                Based on your browsing history
+              </p>
+            </div>
+            <Link
+              to="/products"
+              className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors duration-200"
+            >
+              View All
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {personalRecs.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ══════════════════════════════════════
          FEATURES STRIP

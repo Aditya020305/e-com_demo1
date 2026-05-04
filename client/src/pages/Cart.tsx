@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../store/CartContext';
 import { useAuth } from '../hooks/useAuth';
+import { getProducts } from '../services/productService';
+import type { ApiProduct } from '../services/productService';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 
@@ -9,9 +11,69 @@ import EmptyState from '../components/ui/EmptyState';
    Cart Page
    ======================================== */
 const Cart: React.FC = () => {
-  const { cartItems, removeFromCart, updateQuantity, totalPrice, loading } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, addToCart, totalPrice, loading } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  /* ── Frequently Bought Together ── */
+  const [suggestions, setSuggestions] = useState<ApiProduct[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [addingSuggestionId, setAddingSuggestionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      setSuggestions([]);
+      return;
+    }
+
+    const fetchSuggestions = async () => {
+      setSuggestionsLoading(true);
+      try {
+        const cartProductIds = new Set(cartItems.map((item) => item.id));
+
+        // Fetch a broad set of products
+        const response = await getProducts(undefined, undefined, 1, 50);
+        const allProducts = response.data.products;
+
+        // Find categories of products currently in cart
+        const cartCategories = new Set(
+          allProducts
+            .filter((p) => cartProductIds.has(p._id))
+            .map((p) => p.category)
+        );
+
+        // Suggest products from the same categories, excluding cart items
+        const candidates = allProducts.filter(
+          (p) => cartCategories.has(p.category) && !cartProductIds.has(p._id)
+        );
+
+        // If not enough same-category results, backfill with other products
+        if (candidates.length < 4) {
+          const backfill = allProducts.filter(
+            (p) => !cartCategories.has(p.category) && !cartProductIds.has(p._id)
+          );
+          candidates.push(...backfill.slice(0, 6 - candidates.length));
+        }
+
+        setSuggestions(candidates.slice(0, 6));
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setSuggestionsLoading(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, [cartItems]);
+
+  const handleAddSuggestion = async (productId: string) => {
+    setAddingSuggestionId(productId);
+    try {
+      await addToCart(productId);
+    } finally {
+      setAddingSuggestionId(null);
+    }
+  };
 
   /* ── Redirect if not logged in ── */
   if (!isAuthenticated) {
@@ -216,6 +278,94 @@ const Cart: React.FC = () => {
           </svg>
           Continue Shopping
         </Link>
+        {/* ══════════════════════════════════════
+           FREQUENTLY BOUGHT TOGETHER
+           ══════════════════════════════════════ */}
+        {suggestionsLoading ? (
+          <div className="mt-10 pt-8 border-t border-neutral-800">
+            <h2 className="text-lg sm:text-xl font-bold text-neutral-100 mb-5">
+              Frequently Bought Together
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-neutral-800 bg-neutral-800/50 overflow-hidden">
+                  <div className="aspect-square bg-neutral-800 animate-pulse" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 w-3/4 rounded bg-neutral-800 animate-pulse" />
+                    <div className="h-4 w-1/2 rounded bg-neutral-800 animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : suggestions.length > 0 ? (
+          <div className="mt-10 pt-8 border-t border-neutral-800">
+            <div className="flex items-center gap-2 mb-5">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+              </svg>
+              <h2 className="text-lg sm:text-xl font-bold text-neutral-100">
+                Frequently Bought <span className="text-gradient-gold">Together</span>
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {suggestions.map((product) => {
+                const img = product.images && product.images.length > 0 ? product.images[0] : '/products/headphones.png';
+                const isAdding = addingSuggestionId === product._id;
+                return (
+                  <div
+                    key={product._id}
+                    className="group rounded-xl border border-neutral-800 bg-neutral-900/80 overflow-hidden transition-all duration-300 hover:border-primary-500/30 hover:shadow-gold"
+                  >
+                    <Link to={`/product/${product._id}`} className="block">
+                      <div className="aspect-square bg-neutral-800/50 overflow-hidden">
+                        <img
+                          src={img}
+                          alt={product.name}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
+                    </Link>
+                    <div className="p-2.5">
+                      <Link to={`/product/${product._id}`}>
+                        <h3 className="text-xs font-medium text-neutral-100 leading-snug line-clamp-1 hover:text-primary-400 transition-colors duration-200">
+                          {product.name}
+                        </h3>
+                      </Link>
+                      <p className="text-xs font-semibold text-primary-400 mt-1">₹{product.price}</p>
+                      <button
+                        onClick={() => handleAddSuggestion(product._id)}
+                        disabled={isAdding}
+                        className={`mt-2 w-full py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all duration-200 min-h-[32px] flex items-center justify-center gap-1 ${
+                          isAdding
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-primary-500/10 text-primary-400 border border-primary-500/20 hover:bg-primary-500/20 hover:border-primary-500/30'
+                        }`}
+                      >
+                        {isAdding ? (
+                          <>
+                            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            Adding...
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                            </svg>
+                            Add
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );
