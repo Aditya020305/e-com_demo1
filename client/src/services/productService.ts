@@ -52,3 +52,53 @@ export const getProductById = async (id: string): Promise<ApiProduct> => {
   );
   return data.data;
 };
+
+/* ── Vendor-specific endpoints ── */
+
+export const getVendorProducts = async (): Promise<ApiProduct[]> => {
+  const { data } = await API.get<{ success: boolean; data: ApiProduct[] }>(
+    "/products/vendor"
+  );
+  return data.data;
+};
+
+export const deleteProduct = async (
+  id: string
+): Promise<{ success: boolean; message: string }> => {
+  const { data } = await API.delete<{ success: boolean; message: string }>(
+    `/products/${id}`
+  );
+  return data;
+};
+
+export interface ProductPayload {
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  stock: number;
+  images: string[];
+}
+
+export const createProduct = async (
+  payload: ProductPayload
+): Promise<{ success: boolean; message: string; data: ApiProduct }> => {
+  const { data } = await API.post<{
+    success: boolean;
+    message: string;
+    data: ApiProduct;
+  }>("/products", payload);
+  return data;
+};
+
+export const updateProduct = async (
+  id: string,
+  payload: Partial<ProductPayload>
+): Promise<{ success: boolean; message: string; data: ApiProduct }> => {
+  const { data } = await API.put<{
+    success: boolean;
+    message: string;
+    data: ApiProduct;
+  }>(`/products/${id}`, payload);
+  return data;
+};

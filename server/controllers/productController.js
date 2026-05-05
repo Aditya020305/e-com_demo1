@@ -280,10 +280,22 @@ const deleteProduct = async (req, res) => {
   });
 };
 
+const getVendorProducts = async (req, res) => {
+  const products = await Product.find({ vendor: req.user._id })
+    .sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    message: "Vendor products fetched successfully",
+    data: products,
+  });
+};
+
 module.exports = {
   createProduct,
   getProducts,
   getProductById,
   updateProduct,
   deleteProduct,
+  getVendorProducts,
 };

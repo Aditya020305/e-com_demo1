@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useCallback, useMemo } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 
@@ -92,8 +92,15 @@ const IconDocument: React.FC = () => (
    Login Page
    ======================================== */
 const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  /** Detect vendor login intent from query param */
+  const isVendorLogin = useMemo(
+    () => searchParams.get('role') === 'vendor',
+    [searchParams],
+  );
 
   const [form, setForm] = useState<FormState>({ email: '', password: '' });
   const [errors, setErrors] = useState<ErrorState>({});
@@ -139,8 +146,23 @@ const Login: React.FC = () => {
       if (Object.keys(validationErrors).length > 0) return;
       setIsLoading(true);
       try {
-        await login(form.email, form.password);
-        navigate('/');
+        const data = await login(form.email, form.password);
+
+        /* ── Role-based validation & redirect ── */
+        if (isVendorLogin && data.user.role !== 'vendor') {
+          // Non-vendor tried the vendor login → deny access
+          setApiError('Access denied: Not a vendor account');
+          // Fully clear the auth state that was just saved
+          logout();
+          return;
+        }
+
+        // Redirect based on role
+        if (data.user.role === 'vendor') {
+          navigate('/vendor/dashboard');
+        } else {
+          navigate('/');
+        }
       } catch (err: any) {
         const message =
           err?.response?.data?.message || 'Login failed. Please try again.';
@@ -149,7 +171,7 @@ const Login: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [form, login, navigate],
+    [form, login, logout, navigate, isVendorLogin],
   );
 
   const inputBorder = (field: keyof ErrorState) =>
@@ -196,6 +218,21 @@ const Login: React.FC = () => {
 
         {/* ── Glass Card ── */}
         <div className="w-full rounded-xl border border-primary-500/15 bg-black/40 shadow-2xl shadow-black/40 backdrop-blur-xl p-8 sm:p-10">
+          {/* Dynamic Login Heading */}
+          <h1 className="text-2xl font-bold text-center text-neutral-100 mb-6">
+            {isVendorLogin ? (
+              <>
+                <span className="text-gradient-gold">Vendor</span> Login
+              </>
+            ) : (
+              'Sign In'
+            )}
+          </h1>
+          {isVendorLogin && (
+            <p className="text-center text-xs text-neutral-500 -mt-4 mb-6">
+              Access your vendor dashboard
+            </p>
+          )}
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
             {/* Username / Email */}
             <div>
@@ -311,17 +348,31 @@ const Login: React.FC = () => {
                 loading={isLoading}
                 disabled={isDisabled}
               >
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isLoading ? 'Logging in...' : isVendorLogin ? 'Login as Vendor' : 'Login'}
               </Button>
             </div>
           </form>
 
-          {/* Footer */}
           <p className="mt-6 text-center text-xs text-neutral-500">
-            Don't have an account?{' '}
-            <Link to="/signup" className="font-semibold text-primary-400 hover:text-primary-300 transition-colors duration-200 underline underline-offset-2">
-              Sign up
-            </Link>
+            {isVendorLogin ? (
+              <>
+                Don't have a vendor account?{' '}
+                <Link to="/vendor/register" className="font-semibold text-primary-400 hover:text-primary-300 transition-colors duration-200 underline underline-offset-2">
+                  Register here
+                </Link>
+                <span className="mx-1.5 text-neutral-600">·</span>
+                <Link to="/login" className="font-semibold text-neutral-400 hover:text-neutral-300 transition-colors duration-200 underline underline-offset-2">
+                  User Login
+                </Link>
+              </>
+            ) : (
+              <>
+                Don't have an account?{' '}
+                <Link to="/signup" className="font-semibold text-primary-400 hover:text-primary-300 transition-colors duration-200 underline underline-offset-2">
+                  Sign up
+                </Link>
+              </>
+            )}
           </p>
         </div>
       </div>

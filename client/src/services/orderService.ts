@@ -65,3 +65,43 @@ export const getOrderById = async (id: string): Promise<OrderResponse> => {
   const { data } = await API.get<OrderResponse>(`/orders/${id}`);
   return data;
 };
+
+/* ── Vendor-specific endpoints ── */
+
+export interface VendorOrderItem {
+  product: {
+    _id: string;
+    name: string;
+    price: number;
+    images: string[];
+    vendor: string;
+  };
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export interface VendorOrder {
+  _id: string;
+  user: { _id: string; name: string; email: string };
+  orderItems: VendorOrderItem[];
+  totalPrice: number;
+  shippingAddress: ShippingAddress;
+  paymentMethod: string;
+  isPaid: boolean;
+  paidAt?: string;
+  isDelivered: boolean;
+  deliveredAt?: string;
+  isReturned?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getVendorOrders = async (): Promise<VendorOrder[]> => {
+  const { data } = await API.get<{
+    success: boolean;
+    message: string;
+    data: VendorOrder[];
+  }>("/orders/vendor");
+  return data.data;
+};

@@ -23,11 +23,16 @@ const Navbar: React.FC = () => {
     navigate('/');
   }, [logout, closeMobile, navigate]);
 
+  // Hide the entire customer navbar on vendor routes
+  const isVendorRoute = location.pathname.startsWith('/vendor');
+  if (isVendorRoute) return null;
+
   /* ── Links for guests ── */
   const guestLinks = [
     { to: '/', label: 'Home' },
     { to: '/login', label: 'Sign In' },
     { to: '/signup', label: 'Sign Up' },
+    { to: '/login?role=vendor', label: 'Vendor Login' },
   ];
 
   /* ── Links for authenticated users ── */

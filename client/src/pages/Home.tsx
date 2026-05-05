@@ -143,9 +143,9 @@ const Home: React.FC = () => {
                   Shop Now
                 </Button>
               </Link>
-              <Link to="/signup">
+              <Link to="/login?role=vendor">
                 <Button variant="outline" size="lg">
-                  Become a Vendor
+                  Vendor Login
                 </Button>
               </Link>
             </div>

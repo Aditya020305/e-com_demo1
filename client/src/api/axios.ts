@@ -1,4 +1,8 @@
-import axios from "axios";
+import axios, {
+  type AxiosError,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from "axios";
 
 const API = axios.create({
   baseURL: "http://localhost:5000/api",
@@ -7,20 +11,22 @@ const API = axios.create({
   },
 });
 
+// Request interceptor — attach JWT token to every outgoing request
 API.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error: AxiosError) => Promise.reject(error)
 );
 
+// Response interceptor — handle 401 by clearing auth state
 API.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response: AxiosResponse): AxiosResponse => response,
+  (error: AxiosError) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");

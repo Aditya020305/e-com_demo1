@@ -186,5 +186,24 @@ const getOrderById = async (req, res) => {
   });
 };
 
-module.exports = { createOrder, getMyOrders, getOrderById, returnOrder };
+const getVendorOrders = async (req, res) => {
+  // Get all product IDs belonging to this vendor
+  const vendorProductIds = await Product.find({ vendor: req.user._id }).distinct("_id");
+
+  // Find orders that contain at least one of this vendor's products
+  const orders = await Order.find({
+    "orderItems.product": { $in: vendorProductIds },
+  })
+    .populate("user", "name email")
+    .populate("orderItems.product", "name price images vendor")
+    .sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    message: "Vendor orders fetched successfully",
+    data: orders,
+  });
+};
+
+module.exports = { createOrder, getMyOrders, getOrderById, returnOrder, getVendorOrders };
 

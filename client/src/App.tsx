@@ -8,6 +8,7 @@ import { WishlistProvider } from './context/WishlistContext';
 
 /* ── Components ── */
 import Navbar from './components/Navbar';
+import ProtectedVendorRoute from './components/ProtectedVendorRoute';
 
 /* ── Pages ── */
 import Home from './pages/Home';
@@ -20,6 +21,14 @@ import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Orders from './pages/Orders';
 import Wishlist from './pages/Wishlist';
+
+/* ── Vendor Pages ── */
+import VendorDashboard from './pages/vendor/VendorDashboard';
+import VendorProducts from './pages/vendor/VendorProducts';
+import AddProduct from './pages/vendor/AddProduct';
+import EditProduct from './pages/vendor/EditProduct';
+import VendorOrders from './pages/vendor/VendorOrders';
+import VendorRegister from './pages/vendor/VendorRegister';
 
 /* ========================================
    Footer Component
@@ -68,6 +77,49 @@ const App: React.FC = () => {
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/wishlist" element={<Wishlist />} />
+
+              {/* ── Vendor Routes ── */}
+              <Route path="/vendor/register" element={<VendorRegister />} />
+              <Route
+                path="/vendor/dashboard"
+                element={
+                  <ProtectedVendorRoute>
+                    <VendorDashboard />
+                  </ProtectedVendorRoute>
+                }
+              />
+              <Route
+                path="/vendor/products"
+                element={
+                  <ProtectedVendorRoute>
+                    <VendorProducts />
+                  </ProtectedVendorRoute>
+                }
+              />
+              <Route
+                path="/vendor/add-product"
+                element={
+                  <ProtectedVendorRoute>
+                    <AddProduct />
+                  </ProtectedVendorRoute>
+                }
+              />
+              <Route
+                path="/vendor/edit-product/:id"
+                element={
+                  <ProtectedVendorRoute>
+                    <EditProduct />
+                  </ProtectedVendorRoute>
+                }
+              />
+              <Route
+                path="/vendor/orders"
+                element={
+                  <ProtectedVendorRoute>
+                    <VendorOrders />
+                  </ProtectedVendorRoute>
+                }
+              />
             </Routes>
           </main>
 
