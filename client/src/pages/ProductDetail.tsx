@@ -486,6 +486,10 @@ const ProductDetail: React.FC = () => {
   const wishlisted = isInWishlist(product._id);
 
   const handleToggleWishlist = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
     toggleWishlist({
       id: product._id,
       name: product.name,

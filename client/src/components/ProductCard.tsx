@@ -78,6 +78,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      if (!isAuthenticated) {
+        navigate('/login');
+        return;
+      }
       toggleWishlist({
         id: String(product.id),
         name: product.name,
@@ -86,7 +90,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         category: product.category,
       });
     },
-    [toggleWishlist, product],
+    [toggleWishlist, product, isAuthenticated, navigate],
   );
 
   return (
