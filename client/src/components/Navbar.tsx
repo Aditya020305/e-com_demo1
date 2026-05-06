@@ -32,7 +32,7 @@ const Navbar: React.FC = () => {
     { to: '/', label: 'Home' },
     { to: '/login', label: 'Sign In' },
     { to: '/signup', label: 'Sign Up' },
-    { to: '/login?role=vendor', label: 'Vendor Login' },
+    { to: '/login?role=vendor', label: 'Sell on JabalpurMart', isVendorCta: true },
   ];
 
   /* ── Links for authenticated users ── */
@@ -56,11 +56,16 @@ const Navbar: React.FC = () => {
             onClick={closeMobile}
           >
             <div className="w-9 h-9 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center shadow-gold group-hover:shadow-gold-lg transition-all duration-200">
-              <span className="text-neutral-900 font-bold text-sm">E</span>
+              <span className="text-neutral-900 font-extrabold text-[11px] tracking-tight">JM</span>
             </div>
-            <span className="text-xl font-semibold text-neutral-100 tracking-tight">
-              E-Commerce
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-neutral-100 tracking-tight leading-none">
+                Jabalpur<span className="text-gradient-gold">Mart</span>
+              </span>
+              <span className="hidden sm:block text-[10px] text-neutral-500 tracking-wide leading-none mt-0.5">
+                Serving Jabalpur Locally
+              </span>
+            </div>
           </Link>
 
           {/* ── Desktop Nav Buttons (Right Side) ── */}
@@ -69,12 +74,21 @@ const Navbar: React.FC = () => {
               <Link
                 key={link.to + link.label}
                 to={link.to}
-                className={`relative btn-primary text-sm px-5 py-2 rounded-lg transition-all duration-200 hover:scale-105 ${
+                className={`relative text-sm px-5 py-2 rounded-lg transition-all duration-200 hover:scale-105 ${
+                  (link as any).isVendorCta
+                    ? 'bg-primary-500/15 text-primary-400 border border-primary-500/30 hover:bg-primary-500/25 hover:border-primary-400/50 font-semibold'
+                    : 'btn-primary'
+                } ${
                   isActive(link.to)
                     ? 'ring-2 ring-primary-300 ring-offset-2 ring-offset-neutral-950'
                     : ''
                 }`}
               >
+                {(link as any).isVendorCta && (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline-block mr-1 -mt-px" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                  </svg>
+                )}
                 {link.label}
                 {/* Cart badge */}
                 {link.label === 'Cart' && totalItems > 0 && (

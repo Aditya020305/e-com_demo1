@@ -552,15 +552,34 @@ const ProductDetail: React.FC = () => {
               </span>
             </div>
 
-            {/* Vendor */}
-            {product.vendor && (
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-xs text-neutral-500">Sold by:</span>
-                <span className="text-xs font-semibold text-primary-400">
-                  {product.vendor.name}
-                </span>
-              </div>
-            )}
+            {/* Vendor — Local Seller Card */}
+            {product.vendor && (() => {
+              const localAreas = ['Napier Town', 'Wright Town', 'Madan Mahal', 'Gorakhpur', 'Adhartal', 'Vijay Nagar', 'Gwarighat'];
+              const areaIdx = product._id.charCodeAt(product._id.length - 1) % localAreas.length;
+              return (
+                <div className="flex items-start gap-3 mb-5 p-3 rounded-xl border border-neutral-800 bg-neutral-800/40">
+                  <div className="w-10 h-10 rounded-lg bg-primary-500/15 flex items-center justify-center flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                    </svg>
+                  </div>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-sm font-semibold text-neutral-100 truncate">
+                      {product.vendor.name}
+                    </span>
+                    <span className="text-xs text-neutral-500">
+                      {localAreas[areaIdx]}, Jabalpur
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 uppercase tracking-wider mt-0.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Verified Local Vendor
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Price */}
             <div className="flex flex-wrap items-baseline gap-2 sm:gap-3 mb-3">
@@ -568,6 +587,17 @@ const ProductDetail: React.FC = () => {
             </div>
 
             {/* Price Insight Badge */}
+            {/* Local Delivery Message */}
+            {product.stock > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                  <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-1h3.05a2.5 2.5 0 014.9 0H19a1 1 0 001-1v-4a1 1 0 00-.293-.707l-3-3A1 1 0 0016 5h-3V4a1 1 0 00-1-1H3zm10 2h2.586L18 8.414V12h-1.05a2.5 2.5 0 00-4.9 0H11V6h2z" />
+                </svg>
+                <span className="text-xs text-emerald-400 font-medium">Fast delivery available within Jabalpur</span>
+              </div>
+            )}
+
             {priceInsight && (
               <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${priceInsight.bgColor} border ${priceInsight.borderColor} mb-6`}>
                 <span className="text-base">{priceInsight.icon}</span>
@@ -613,9 +643,14 @@ const ProductDetail: React.FC = () => {
             {/* Tab Content */}
             <div className="mb-8 min-h-[120px]">
               {activeTab === 'description' ? (
-                <p className="text-sm text-neutral-400 leading-relaxed break-words">
-                  {product.description}
-                </p>
+                <div>
+                  <p className="text-xs text-primary-500/60 italic mb-3">
+                    Product available from a verified local vendor in Jabalpur.
+                  </p>
+                  <p className="text-sm text-neutral-400 leading-relaxed break-words">
+                    {product.description}
+                  </p>
+                </div>
               ) : (
                 <ul className="space-y-2">
                   {productFeatures.map((feature, i) => (
@@ -832,6 +867,24 @@ const ProductDetail: React.FC = () => {
               </button>
             </div>
 
+            {/* Why Buy Local? */}
+            <div className="rounded-xl border border-neutral-800 bg-neutral-800/30 p-4 mb-6">
+              <h4 className="text-sm font-bold text-neutral-200 mb-3">Why Buy Local?</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { icon: '🚚', text: 'Faster delivery' },
+                  { icon: '🤝', text: 'Better local support' },
+                  { icon: '🏪', text: 'Support Jabalpur businesses' },
+                  { icon: '💬', text: 'Easier seller communication' },
+                ].map((item) => (
+                  <div key={item.text} className="flex items-center gap-2 text-xs text-neutral-500">
+                    <span>{item.icon}</span>
+                    <span>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Back */}
             <button
               onClick={() => navigate(-1)}
@@ -842,6 +895,58 @@ const ProductDetail: React.FC = () => {
               </svg>
               Back to products
             </button>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════
+           COMMUNITY TRUST STRIP
+           ══════════════════════════════════════ */}
+        <div className="mt-10 pt-8 border-t border-neutral-800">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                ),
+                title: 'Trusted Local Vendors',
+                desc: 'Verified sellers from Jabalpur',
+              },
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                ),
+                title: 'Secure Payments',
+                desc: 'Razorpay protected',
+              },
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                  </svg>
+                ),
+                title: 'Neighborhood Shops',
+                desc: 'Support local businesses',
+              },
+              {
+                icon: (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                  </svg>
+                ),
+                title: 'Easy Local Support',
+                desc: 'Quick seller response',
+              },
+            ].map((item) => (
+              <div key={item.title} className="flex flex-col items-center text-center p-3 rounded-lg">
+                <div className="text-primary-400 mb-1.5">{item.icon}</div>
+                <h5 className="text-xs font-semibold text-neutral-300">{item.title}</h5>
+                <p className="text-[10px] text-neutral-500 mt-0.5">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
 

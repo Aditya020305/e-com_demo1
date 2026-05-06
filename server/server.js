@@ -14,6 +14,7 @@ const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
 const vendorRoutes = require("./routes/vendorRoutes");
+const paymentRoutes = require("./routes/paymentRoutes"); // RAZORPAY INTEGRATION
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/vendor", vendorRoutes);
+app.use("/api/payment", paymentRoutes); // RAZORPAY INTEGRATION
 
 app.use(notFound);
 app.use(errorHandler);

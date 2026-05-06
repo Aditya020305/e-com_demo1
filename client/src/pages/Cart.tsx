@@ -110,7 +110,7 @@ const Cart: React.FC = () => {
     return (
       <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-8">Your Cart</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-8">Your Local Cart</h1>
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="h-24 rounded-xl bg-neutral-800/60 border border-neutral-800 animate-pulse" />
@@ -142,10 +142,10 @@ const Cart: React.FC = () => {
               />
             </svg>
           }
-          title="Your cart is empty"
-          description="Looks like you haven't added anything yet"
-          actionLabel="Continue Shopping"
-          onAction={() => navigate('/')}
+          title="Your local shopping cart is empty"
+          description="Explore products from nearby Jabalpur vendors."
+          actionLabel="Shop Local Products"
+          onAction={() => navigate('/products')}
         />
       </section>
     );
@@ -155,7 +155,14 @@ const Cart: React.FC = () => {
     <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
         {/* ── Page Title ── */}
-        <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-8">Your Cart</h1>
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100">
+            Your Local <span className="text-gradient-gold">Shopping Cart</span>
+          </h1>
+          <p className="mt-2 text-sm text-neutral-400">
+            Review products from trusted local shops before checkout.
+          </p>
+        </div>
 
         {/* ── Cart Items ── */}
         <div className="space-y-4 mb-8">
@@ -186,6 +193,7 @@ const Cart: React.FC = () => {
                 <p className="text-sm text-primary-400 font-bold mt-1">
                   ₹{item.price.toFixed(2)}
                 </p>
+                <p className="text-[10px] text-neutral-500 mt-0.5">Sold by local vendor · Fast Jabalpur delivery</p>
               </div>
 
               {/* Quantity Controls */}
@@ -242,19 +250,39 @@ const Cart: React.FC = () => {
 
         {/* ── Total Section ── */}
         <div className="rounded-xl border border-neutral-800 bg-neutral-800/60 p-4 sm:p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <span className="text-lg font-semibold text-neutral-300">Total</span>
             <span className="text-2xl sm:text-3xl font-bold text-primary-400">
               ₹{totalPrice.toFixed(2)}
             </span>
           </div>
 
+          {/* Local support note */}
+          <div className="flex items-center justify-center gap-1.5 rounded-full bg-primary-500/10 border border-primary-500/15 px-3 py-1.5 mb-4">
+            <span className="text-[11px] text-primary-300/80 font-medium">Every purchase supports local businesses in your city ❤️</span>
+          </div>
+
           {/* Checkout Button */}
-          <Link to="/checkout" className="block">
+          <Link to="/checkout" className="block mb-4">
             <Button variant="secondary" size="lg" fullWidth disabled={loading}>
-              Proceed to Checkout
+              Proceed to Secure Checkout
             </Button>
           </Link>
+
+          {/* Trust Indicators */}
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { icon: '🔒', text: 'Secure Razorpay Payments' },
+              { icon: '✅', text: 'Trusted Local Vendors' },
+              { icon: '🚚', text: 'Fast City Delivery' },
+              { icon: '🛡️', text: 'Safe Checkout' },
+            ].map((b) => (
+              <div key={b.text} className="flex items-center gap-1.5 text-[11px] text-neutral-500">
+                <span>{b.icon}</span>
+                <span>{b.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Continue Shopping */}

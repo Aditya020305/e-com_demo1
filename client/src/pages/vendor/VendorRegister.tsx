@@ -241,13 +241,12 @@ const VendorRegister: React.FC = () => {
 
         {/* ── Glass Card ── */}
         <div className="w-full rounded-xl border border-primary-500/15 bg-black/40 shadow-2xl shadow-black/40 backdrop-blur-xl p-8 sm:p-10">
-          {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100">
-              <span className="text-gradient-gold">Vendor</span> Registration
+              Grow Your Shop Online in <span className="text-gradient-gold">Jabalpur</span>
             </h1>
-            <p className="mt-2 text-neutral-500 text-sm">
-              Create your vendor account and start selling
+            <p className="mt-2 text-neutral-400 text-sm">
+              Join our marketplace and start selling to customers across the city.
             </p>
           </div>
 
@@ -268,14 +267,19 @@ const VendorRegister: React.FC = () => {
             {renderField('vendor-reg-password', 'password', 'password', '••••••••', 'Password', lockIcon)}
             {renderField('vendor-reg-confirm', 'confirmPassword', 'password', '••••••••', 'Confirm Password', lockIcon)}
 
-            {/* Vendor Notice */}
-            <div className="flex items-start gap-2.5 rounded-lg border border-primary-500/15 bg-primary-500/5 px-4 py-3">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary-400 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <p className="text-[11px] text-neutral-400 leading-relaxed">
-                By registering as a vendor, you'll get access to product management, order tracking, and analytics dashboards.
-              </p>
+            {/* Vendor Benefits */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { icon: '👥', text: 'Reach Local Customers' },
+                { icon: '💻', text: 'Sell Online Easily' },
+                { icon: '💳', text: 'Secure Payments' },
+                { icon: '📈', text: 'Grow Your Business' },
+              ].map((b) => (
+                <div key={b.text} className="flex items-center gap-2 rounded-lg border border-primary-500/15 bg-primary-500/5 px-3 py-2">
+                  <span className="text-sm">{b.icon}</span>
+                  <span className="text-[11px] text-neutral-300 font-medium">{b.text}</span>
+                </div>
+              ))}
             </div>
 
             {/* API Error */}
@@ -299,7 +303,7 @@ const VendorRegister: React.FC = () => {
                 loading={isLoading}
                 disabled={isDisabled || !!successMessage}
               >
-                {isLoading ? 'Creating vendor account...' : 'Create Vendor Account'}
+                {isLoading ? 'Creating vendor account...' : 'Start Selling in Jabalpur'}
               </Button>
             </div>
           </form>

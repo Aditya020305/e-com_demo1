@@ -3,8 +3,19 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getMyOrders } from '../services/orderService';
 import type { Order } from '../services/orderService';
+// RAZORPAY INTEGRATION START
+import { createRazorpayOrder, verifyRazorpayPayment } from '../services/orderService';
+// RAZORPAY INTEGRATION END
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
+
+// RAZORPAY INTEGRATION START
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+// RAZORPAY INTEGRATION END
 
 /* ── Status Badge ── */
 const StatusBadge: React.FC<{ delivered: boolean; paid: boolean }> = ({
@@ -40,11 +51,14 @@ const StatusBadge: React.FC<{ delivered: boolean; paid: boolean }> = ({
    ======================================== */
 const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // RAZORPAY INTEGRATION START
+  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
+  // RAZORPAY INTEGRATION END
 
   /* ── Auth guard ── */
   useEffect(() => {
@@ -77,6 +91,68 @@ const Orders: React.FC = () => {
     load();
   }, [isAuthenticated]);
 
+  // RAZORPAY INTEGRATION START
+  const handleRetryPayment = async (order: Order) => {
+    setPayingOrderId(order._id);
+    setError(null);
+    try {
+      const razorpayRes = await createRazorpayOrder(order._id);
+      const { razorpayOrderId, keyId } = razorpayRes.data;
+
+      const options = {
+        key: keyId,
+        amount: razorpayRes.data.amount,
+        currency: razorpayRes.data.currency,
+        name: 'E-Commerce Platform',
+        description: `Order #${order._id.slice(-8)}`,
+        order_id: razorpayOrderId,
+        handler: async (response: any) => {
+          try {
+            await verifyRazorpayPayment({
+              orderId: order._id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            // Refresh orders list to show updated status
+            const refreshed = await getMyOrders();
+            setOrders(refreshed.data);
+          } catch (verifyErr: any) {
+            setError(
+              verifyErr?.response?.data?.message ||
+              'Payment verification failed. Contact support.'
+            );
+          } finally {
+            setPayingOrderId(null);
+          }
+        },
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+        },
+        theme: {
+          color: '#4F46E5',
+        },
+        modal: {
+          ondismiss: () => {
+            setPayingOrderId(null);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to initiate payment. Please try again.'
+      );
+      setPayingOrderId(null);
+    }
+  };
+  // RAZORPAY INTEGRATION END
+
   /* ── Auth loading ── */
   if (authLoading) {
     return (
@@ -92,7 +168,7 @@ const Orders: React.FC = () => {
       <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-8">
-            My Orders
+            Your Local Orders
           </h1>
           <div className="space-y-4">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -113,7 +189,7 @@ const Orders: React.FC = () => {
       <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-8">
-            My Orders
+            Your Local Orders
           </h1>
           <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-6 py-8 text-center">
             <svg
@@ -168,10 +244,10 @@ const Orders: React.FC = () => {
               />
             </svg>
           }
-          title="No orders yet"
-          description="You haven't placed any orders. Start shopping to see your orders here."
-          actionLabel="Start Shopping"
-          onAction={() => navigate('/')}
+          title="You haven't placed any local orders yet"
+          description="Explore products from nearby Jabalpur vendors and place your first order."
+          actionLabel="Shop Local Products"
+          onAction={() => navigate('/products')}
         />
       </section>
     );
@@ -181,14 +257,23 @@ const Orders: React.FC = () => {
   return (
     <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-8">
-        {/* ── Page Title ── */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100">
-            My Orders
-          </h1>
-          <span className="text-sm text-neutral-500 bg-neutral-800 px-3 py-1.5 rounded-full border border-neutral-700">
-            {orders.length} order{orders.length !== 1 ? 's' : ''}
-          </span>
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100">
+              Your Local <span className="text-gradient-gold">Orders</span>
+            </h1>
+            <span className="text-sm text-neutral-500 bg-neutral-800 px-3 py-1.5 rounded-full border border-neutral-700">
+              {orders.length} order{orders.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+          <p className="text-sm text-neutral-400">
+            Track purchases from trusted local shops across the city.
+          </p>
+        </div>
+
+        {/* Community Message */}
+        <div className="flex items-center justify-center gap-1.5 rounded-full bg-primary-500/10 border border-primary-500/15 px-3 py-1.5 mb-6">
+          <span className="text-[11px] text-primary-300/80 font-medium">Thank you for supporting local businesses in Jabalpur ❤️</span>
         </div>
 
         {/* ── Orders ── */}
@@ -248,6 +333,7 @@ const Orders: React.FC = () => {
                       {order.orderItems.length - 3 !== 1 ? 's' : ''}
                     </p>
                   )}
+                  <p className="text-[10px] text-neutral-500 mt-1">From trusted Jabalpur sellers</p>
                 </div>
 
                 {/* ── Footer Row ── */}
@@ -263,6 +349,19 @@ const Orders: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-4">
+                    {/* RAZORPAY INTEGRATION START */}
+                    {order.paymentMethod !== 'COD' && !order.isPaid && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleRetryPayment(order)}
+                        loading={payingOrderId === order._id}
+                        disabled={payingOrderId === order._id}
+                      >
+                        Pay Now
+                      </Button>
+                    )}
+                    {/* RAZORPAY INTEGRATION END */}
                     <span className="text-lg font-bold text-primary-400">
                       ₹{order.totalPrice.toFixed(2)}
                     </span>
@@ -273,8 +372,23 @@ const Orders: React.FC = () => {
           })}
         </div>
 
+        {/* ── Trust Indicators ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-8 mb-6">
+          {[
+            { icon: '🔒', text: 'Secure Payments' },
+            { icon: '🏪', text: 'Local Vendor Network' },
+            { icon: '🚚', text: 'Fast City Delivery' },
+            { icon: '💬', text: 'Customer Support' },
+          ].map((b) => (
+            <div key={b.text} className="flex items-center gap-1.5 text-[11px] text-neutral-500">
+              <span>{b.icon}</span>
+              <span>{b.text}</span>
+            </div>
+          ))}
+        </div>
+
         {/* ── Continue Shopping Link ── */}
-        <div className="mt-8 text-center">
+        <div className="text-center">
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-primary-400 transition-colors duration-200"
@@ -293,7 +407,7 @@ const Orders: React.FC = () => {
                 d="M10 19l-7-7m0 0l7-7m-7 7h18"
               />
             </svg>
-            Continue Shopping
+            Continue Shopping Locally
           </Link>
         </div>
       </div>

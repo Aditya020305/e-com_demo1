@@ -26,6 +26,10 @@ export interface Order {
   paidAt?: string;
   isDelivered: boolean;
   deliveredAt?: string;
+  // RAZORPAY INTEGRATION START
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  // RAZORPAY INTEGRATION END
   createdAt: string;
   updatedAt: string;
 }
@@ -105,3 +109,42 @@ export const getVendorOrders = async (): Promise<VendorOrder[]> => {
   }>("/orders/vendor");
   return data.data;
 };
+
+// RAZORPAY INTEGRATION START
+export interface RazorpayOrderResponse {
+  success: boolean;
+  data: {
+    razorpayOrderId: string;
+    amount: number;
+    currency: string;
+    keyId: string;
+  };
+}
+
+export interface RazorpayVerifyPayload {
+  orderId: string;
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+export const createRazorpayOrder = async (
+  orderId: string
+): Promise<RazorpayOrderResponse> => {
+  const { data } = await API.post<RazorpayOrderResponse>(
+    "/payment/create-order",
+    { orderId }
+  );
+  return data;
+};
+
+export const verifyRazorpayPayment = async (
+  payload: RazorpayVerifyPayload
+): Promise<{ success: boolean; message: string }> => {
+  const { data } = await API.post<{ success: boolean; message: string }>(
+    "/payment/verify",
+    payload
+  );
+  return data;
+};
+// RAZORPAY INTEGRATION END

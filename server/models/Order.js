@@ -69,6 +69,11 @@ const orderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // RAZORPAY INTEGRATION START
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    razorpaySignature: { type: String },
+    // RAZORPAY INTEGRATION END
   },
   { timestamps: true }
 );

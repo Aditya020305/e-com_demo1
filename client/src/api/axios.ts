@@ -4,8 +4,9 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 
+// NGROK/TUNNEL SUPPORT: Use env var for base URL, fallback to localhost
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
   },

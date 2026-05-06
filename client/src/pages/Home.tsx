@@ -119,43 +119,89 @@ const Home: React.FC = () => {
             {/* Badge */}
             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-sm font-medium mb-6">
               <span className="w-2 h-2 bg-primary-400 rounded-full mr-2 animate-pulse" />
-              Multi-Vendor Marketplace
+              Jabalpur's Local Marketplace
             </div>
 
             {/* Heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-neutral-100 tracking-tight leading-tight">
-              Discover{' '}
-              <span className="text-gradient-gold">Premium</span>
-              <br className="hidden sm:block" />
-              {' '}Products
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-neutral-100 tracking-tight leading-[1.1]">
+              Support Local Shops
+              <br />
+              <span className="text-gradient-gold">in Jabalpur</span>
             </h1>
 
             {/* Subtitle */}
-            <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-neutral-400 leading-relaxed">
-              Curated collections from trusted vendors. Shop smart, shop easy
-              — your one-stop destination for everything premium.
+            <p className="mt-6 sm:mt-8 max-w-2xl mx-auto text-base sm:text-lg lg:text-xl text-neutral-400 leading-relaxed">
+              Discover trusted local vendors, grocery stores, fashion shops,
+              electronics, and daily essentials — all from your city.
             </p>
 
             {/* CTA */}
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/products">
-                <Button variant="primary" size="lg">
-                  Shop Now
+                <Button variant="primary" size="lg" className="px-8 py-3.5 text-lg">
+                  Shop Local
                 </Button>
               </Link>
-              <Link to="/login?role=vendor">
-                <Button variant="outline" size="lg">
-                  Vendor Login
+              <Link to="/vendor/register">
+                <Button variant="outline" size="lg" className="px-8 py-3.5 text-lg">
+                  Become a Vendor
                 </Button>
               </Link>
             </div>
 
-            {/* Stats */}
-            <div className="mt-12 sm:mt-16 grid grid-cols-3 gap-4 sm:gap-8 max-w-md mx-auto">
+            {/* Trust Badges */}
+            <div className="mt-10 sm:mt-12 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
               {[
-                { value: '500+', label: 'Products' },
-                { value: '50+', label: 'Vendors' },
-                { value: '10K+', label: 'Customers' },
+                {
+                  icon: (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ),
+                  text: 'Trusted Local Vendors',
+                },
+                {
+                  icon: (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                      <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-1h3.05a2.5 2.5 0 014.9 0H19a1 1 0 001-1v-4a1 1 0 00-.293-.707l-3-3A1 1 0 0016 5h-3V4a1 1 0 00-1-1H3zm10 2h2.586L18 8.414V12h-1.05a2.5 2.5 0 00-4.9 0H11V6h2z" />
+                    </svg>
+                  ),
+                  text: 'Fast City Delivery',
+                },
+                {
+                  icon: (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ),
+                  text: 'Secure Payments',
+                },
+                {
+                  icon: (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                    </svg>
+                  ),
+                  text: 'Support Local Businesses',
+                },
+              ].map((badge) => (
+                <div
+                  key={badge.text}
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-neutral-500"
+                >
+                  <span className="text-primary-500/70">{badge.icon}</span>
+                  {badge.text}
+                </div>
+              ))}
+            </div>
+
+            {/* Stats */}
+            <div className="mt-12 sm:mt-16 grid grid-cols-3 gap-4 sm:gap-8 max-w-lg mx-auto">
+              {[
+                { value: '500+', label: 'Local Products' },
+                { value: '50+', label: 'City Vendors' },
+                { value: '10K+', label: 'Happy Customers' },
               ].map((stat) => (
                 <div key={stat.label}>
                   <p className="text-2xl sm:text-3xl font-bold text-primary-400">{stat.value}</p>
@@ -188,7 +234,7 @@ const Home: React.FC = () => {
             {featuredCategories.map((cat) => (
               <Link
                 key={cat}
-                to="/products"
+                to={`/products?category=${encodeURIComponent(cat)}`}
                 className="px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 whitespace-nowrap min-h-[40px] flex items-center bg-neutral-800 text-neutral-400 border border-neutral-700 hover:border-primary-500/30 hover:text-primary-400"
               >
                 {cat}
@@ -293,12 +339,116 @@ const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {personalRecs.map((product) => (
+            {personalRecs.slice(0, 4).map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </section>
       )}
+
+      {/* ══════════════════════════════════════
+         FEATURED LOCAL VENDORS
+         ══════════════════════════════════════ */}
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16">
+        {/* Section Header */}
+        <div className="text-center mb-10">
+          <h2 className="text-2xl sm:text-3xl font-bold text-neutral-100">
+            Featured <span className="text-gradient-gold">Local Vendors</span>
+          </h2>
+          <p className="mt-3 text-neutral-500 text-sm sm:text-base max-w-xl mx-auto">
+            Discover trusted shops and businesses serving customers across Jabalpur.
+          </p>
+        </div>
+
+        {/* Vendor Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {[
+            {
+              name: 'Sharma Electronics',
+              area: 'Napier Town',
+              category: 'Electronics & Accessories',
+              desc: 'Quality gadgets, accessories, and electronic appliances for everyday needs.',
+              badge: 'Trusted Vendor',
+              badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+              emoji: '🔌',
+            },
+            {
+              name: 'Gupta Grocery Store',
+              area: 'Wright Town',
+              category: 'Daily Essentials & Groceries',
+              desc: 'Fresh groceries, pantry staples, and household essentials delivered fast.',
+              badge: 'Popular Shop',
+              badgeColor: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+              emoji: '🛒',
+            },
+            {
+              name: 'Fashion Hub',
+              area: 'Sadar Bazaar',
+              category: 'Clothing & Fashion',
+              desc: 'Trendy apparel, traditional wear, and fashion accessories for all ages.',
+              badge: 'Local Favorite',
+              badgeColor: 'bg-primary-500/15 text-primary-400 border-primary-500/20',
+              emoji: '👗',
+            },
+            {
+              name: 'Fresh Mart',
+              area: 'Gwarighat',
+              category: 'Fruits & Vegetables',
+              desc: 'Farm-fresh fruits, vegetables, and organic produce sourced locally.',
+              badge: 'Fast Delivery',
+              badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+              emoji: '🥬',
+            },
+          ].map((vendor) => (
+            <div
+              key={vendor.name}
+              className="group rounded-xl border border-neutral-800 bg-neutral-800/60 p-5 transition-all duration-300 hover:border-neutral-700 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5"
+            >
+              {/* Vendor Icon + Badge */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-11 h-11 rounded-xl bg-neutral-700/50 border border-neutral-700 flex items-center justify-center text-xl group-hover:border-primary-500/30 transition-colors duration-300">
+                  {vendor.emoji}
+                </div>
+                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${vendor.badgeColor}`}>
+                  {vendor.badge}
+                </span>
+              </div>
+
+              {/* Shop Name */}
+              <h3 className="text-sm font-bold text-neutral-100 mb-0.5 group-hover:text-primary-400 transition-colors duration-200">
+                {vendor.name}
+              </h3>
+
+              {/* Area */}
+              <div className="flex items-center gap-1 text-[11px] text-neutral-500 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                </svg>
+                {vendor.area}, Jabalpur
+              </div>
+
+              {/* Category Tag */}
+              <span className="inline-block text-[10px] font-semibold uppercase tracking-wider text-neutral-400 bg-neutral-700/50 rounded-full px-2.5 py-0.5 mb-3">
+                {vendor.category}
+              </span>
+
+              {/* Description */}
+              <p className="text-xs text-neutral-500 leading-relaxed line-clamp-2">
+                {vendor.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Become a Vendor CTA */}
+        <div className="text-center mt-10">
+          <Link to="/vendor/register">
+            <Button variant="outline" size="lg">
+              Become a Local Vendor →
+            </Button>
+          </Link>
+        </div>
+      </section>
 
       {/* ══════════════════════════════════════
          FEATURES STRIP

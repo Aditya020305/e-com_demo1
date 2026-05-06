@@ -246,10 +246,10 @@ const Signup: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100">
-              Create Account
+              Join <span className="text-gradient-gold">Jabalpur's</span> Local Marketplace
             </h1>
-            <p className="mt-2 text-neutral-500 text-sm">
-              Join our marketplace in seconds
+            <p className="mt-2 text-neutral-400 text-sm">
+              Create your account and discover products from trusted local shops.
             </p>
           </div>
 
@@ -292,7 +292,7 @@ const Signup: React.FC = () => {
                 loading={isLoading}
                 disabled={isDisabled}
               >
-                {isLoading ? 'Creating account...' : 'Create Account'}
+                {isLoading ? 'Creating account...' : 'Start Shopping Locally'}
               </Button>
             </div>
           </form>
@@ -304,6 +304,21 @@ const Signup: React.FC = () => {
               Sign in
             </Link>
           </p>
+
+          {/* ── Trust Indicators ── */}
+          <div className="grid grid-cols-2 gap-2 mt-5">
+            {[
+              { icon: '🔒', text: 'Secure Account' },
+              { icon: '✅', text: 'Trusted Local Shops' },
+              { icon: '🚚', text: 'Fast Local Delivery' },
+              { icon: '💬', text: 'Community Support' },
+            ].map((item) => (
+              <div key={item.text} className="flex items-center gap-1.5 text-[11px] text-neutral-500">
+                <span>{item.icon}</span>
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

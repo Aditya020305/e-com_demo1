@@ -219,20 +219,22 @@ const Login: React.FC = () => {
         {/* ── Glass Card ── */}
         <div className="w-full rounded-xl border border-primary-500/15 bg-black/40 shadow-2xl shadow-black/40 backdrop-blur-xl p-8 sm:p-10">
           {/* Dynamic Login Heading */}
-          <h1 className="text-2xl font-bold text-center text-neutral-100 mb-6">
+          <h1 className="text-2xl font-bold text-center text-neutral-100 mb-2">
             {isVendorLogin ? (
               <>
                 <span className="text-gradient-gold">Vendor</span> Login
               </>
             ) : (
-              'Sign In'
+              <>
+                Welcome Back to <span className="text-gradient-gold">JabalpurMart</span>
+              </>
             )}
           </h1>
-          {isVendorLogin && (
-            <p className="text-center text-xs text-neutral-500 -mt-4 mb-6">
-              Access your vendor dashboard
-            </p>
-          )}
+          <p className="text-center text-xs text-neutral-400 mb-6">
+            {isVendorLogin
+              ? 'Manage your local shop and grow your business online.'
+              : 'Access products from trusted local vendors across Jabalpur.'}
+          </p>
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
             {/* Username / Email */}
             <div>
@@ -348,7 +350,7 @@ const Login: React.FC = () => {
                 loading={isLoading}
                 disabled={isDisabled}
               >
-                {isLoading ? 'Logging in...' : isVendorLogin ? 'Login as Vendor' : 'Login'}
+                {isLoading ? 'Logging in...' : isVendorLogin ? 'Login as Vendor' : 'Sign In to JabalpurMart'}
               </Button>
             </div>
           </form>
@@ -374,6 +376,21 @@ const Login: React.FC = () => {
               </>
             )}
           </p>
+
+          {/* ── Trust Indicators ── */}
+          <div className="grid grid-cols-2 gap-2 mt-5">
+            {[
+              { icon: '🔒', text: 'Secure Login' },
+              { icon: '✅', text: 'Trusted Marketplace' },
+              { icon: '🏪', text: 'Verified Local Vendors' },
+              { icon: '💳', text: 'Secure Payments' },
+            ].map((item) => (
+              <div key={item.text} className="flex items-center gap-1.5 text-[11px] text-neutral-500">
+                <span>{item.icon}</span>
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

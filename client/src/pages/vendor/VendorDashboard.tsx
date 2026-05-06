@@ -141,12 +141,21 @@ const VendorDashboard: React.FC = () => {
   return (
     <VendorLayout>
       {/* Page Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100">
-          Vendor <span className="text-gradient-gold">Dashboard</span>
+          Your Local Seller <span className="text-gradient-gold">Dashboard</span>
         </h1>
-        <p className="mt-2 text-neutral-500 text-sm">
-          Welcome back, <span className="text-primary-400 font-medium">{user?.name || 'Vendor'}</span>. Here's an overview of your store.
+        <p className="mt-2 text-neutral-400 text-sm">
+          Welcome back, <span className="text-primary-400 font-medium">{user?.name || 'Vendor'}</span>. Track your products, orders, and business performance across Jabalpur.
+        </p>
+      </div>
+
+      {/* Seller Motivation Banner */}
+      <div className="mb-8 flex items-center gap-3 rounded-xl border border-primary-500/15 bg-primary-500/5 px-5 py-3">
+        <span className="text-xl flex-shrink-0">🏪</span>
+        <p className="text-xs text-neutral-300 font-medium">
+          Grow your local business by reaching more customers across Jabalpur.
+          <span className="text-neutral-500 font-normal ml-1">· Trusted Vendor on JabalpurMart</span>
         </p>
       </div>
 
@@ -167,9 +176,9 @@ const VendorDashboard: React.FC = () => {
       <div id="layout-grid" className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard
           id="stat-total-products"
-          title="Total Products"
+          title="Active Listings"
           value={analytics ? String(analytics.totalProducts) : '0'}
-          subtitle="Active listings"
+          subtitle="Products in your shop"
           accentColor="bg-primary-500/15 text-primary-400"
           bgGlow="bg-primary-500/10"
           loading={loading}
@@ -182,9 +191,9 @@ const VendorDashboard: React.FC = () => {
 
         <StatCard
           id="stat-total-orders"
-          title="Total Orders"
+          title="Local Orders"
           value={analytics ? String(analytics.totalOrders) : '0'}
-          subtitle="Lifetime orders"
+          subtitle="From Jabalpur customers"
           accentColor="bg-blue-500/15 text-blue-400"
           bgGlow="bg-blue-500/10"
           loading={loading}
@@ -197,9 +206,9 @@ const VendorDashboard: React.FC = () => {
 
         <StatCard
           id="stat-revenue"
-          title="Revenue"
+          title="Earnings"
           value={analytics ? formatCurrency(analytics.totalRevenue) : '₹0.00'}
-          subtitle="Total earnings"
+          subtitle="Total revenue earned"
           accentColor="bg-green-500/15 text-green-400"
           bgGlow="bg-green-500/10"
           loading={loading}
@@ -216,7 +225,10 @@ const VendorDashboard: React.FC = () => {
         {/* Recent Orders — takes 3 cols */}
         <div className="lg:col-span-3 bg-neutral-800 border border-neutral-700 rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-700">
-            <h2 className="text-lg font-semibold text-neutral-100">Recent Orders</h2>
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-100">Recent Customer Orders</h2>
+              <p className="text-[11px] text-neutral-500 mt-0.5">Track recent purchases from local customers.</p>
+            </div>
             <Link
               to="/vendor/orders"
               className="text-xs font-medium text-primary-400 hover:text-primary-300 transition-colors"
@@ -252,7 +264,7 @@ const VendorDashboard: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto text-neutral-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <p className="text-sm text-neutral-500">No recent orders</p>
+                <p className="text-sm text-neutral-500">Orders from local customers will appear here.</p>
               </div>
             )}
           </div>
@@ -268,7 +280,7 @@ const VendorDashboard: React.FC = () => {
               {
                 label: 'Add New Product',
                 to: '/vendor/add-product',
-                desc: 'List a new item in your store',
+                desc: 'Add a new listing to your shop',
                 icon: (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -276,7 +288,7 @@ const VendorDashboard: React.FC = () => {
                 ),
               },
               {
-                label: 'View Products',
+                label: 'Shop Products',
                 to: '/vendor/products',
                 desc: 'Manage your product catalog',
                 icon: (
@@ -286,9 +298,9 @@ const VendorDashboard: React.FC = () => {
                 ),
               },
               {
-                label: 'View Orders',
+                label: 'Customer Orders',
                 to: '/vendor/orders',
-                desc: 'Track and manage orders',
+                desc: 'Track and manage local orders',
                 icon: (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />

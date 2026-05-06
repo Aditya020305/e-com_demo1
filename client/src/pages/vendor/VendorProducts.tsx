@@ -83,14 +83,14 @@ const VendorProducts: React.FC = () => {
 
   return (
     <VendorLayout>
-      {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100">
-            My <span className="text-gradient-gold">Products</span>
+            Manage Your <span className="text-gradient-gold">Shop Products</span>
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            {products.length} {products.length === 1 ? 'product' : 'products'} in your catalog
+          <p className="mt-1 text-sm text-neutral-400">
+            Track and manage products visible to customers across Jabalpur.
+            <span className="text-neutral-600 ml-1">· {products.length} {products.length === 1 ? 'product' : 'products'} listed</span>
           </p>
         </div>
         <Link to="/vendor/add-product">
@@ -98,10 +98,21 @@ const VendorProducts: React.FC = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            Add Product
+            Add New Product
           </Button>
         </Link>
       </div>
+
+      {/* Seller Visibility Banner */}
+      {products.length > 0 && (
+        <div className="mb-6 flex items-center gap-2 rounded-xl border border-primary-500/15 bg-primary-500/5 px-4 py-2.5">
+          <span className="text-sm flex-shrink-0">🏪</span>
+          <p className="text-xs text-neutral-300 font-medium">
+            Your products are visible to customers across Jabalpur.
+            <span className="text-neutral-500 font-normal ml-1">· Active listings appear in local search results</span>
+          </p>
+        </div>
+      )}
 
       {/* ── Error Banner ── */}
       {error && (
@@ -132,7 +143,7 @@ const VendorProducts: React.FC = () => {
           </div>
           <h2 className="text-xl font-semibold text-neutral-200 mb-2">No products yet</h2>
           <p className="text-sm text-neutral-500 mb-8 max-w-sm mx-auto">
-            Start by adding your first product to your catalog. It'll appear here once created.
+            Start building your online shop by adding your first product. Reach local customers in Jabalpur.
           </p>
           <Link to="/vendor/add-product">
             <Button variant="primary" size="lg">
@@ -183,7 +194,7 @@ const VendorProducts: React.FC = () => {
                         }
                       `}
                     >
-                      {product.isActive ? 'Active' : 'Inactive'}
+                      {product.isActive ? 'Active Listing' : 'Inactive'}
                     </span>
                   </div>
                   {/* Category Badge */}
@@ -205,9 +216,12 @@ const VendorProducts: React.FC = () => {
                       ₹{product.price.toLocaleString('en-IN')}
                     </span>
                     <span className="text-xs text-neutral-500">
-                      Stock: <span className={`font-medium ${product.stock > 0 ? 'text-neutral-300' : 'text-red-400'}`}>
-                        {product.stock}
+                      Stock: <span className={`font-medium ${product.stock > 5 ? 'text-neutral-300' : product.stock > 0 ? 'text-amber-400' : 'text-red-400'}`}>
+                        {product.stock > 0 ? product.stock : 'Out of Stock'}
                       </span>
+                      {product.stock > 0 && product.stock <= 5 && (
+                        <span className="text-amber-400/70 ml-1">· Low</span>
+                      )}
                     </span>
                   </div>
 

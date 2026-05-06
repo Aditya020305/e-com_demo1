@@ -16,6 +16,7 @@ export interface ProductData {
   rating: number;
   reviews: number;
   badge?: string;
+  vendorName?: string;
 }
 
 interface ProductCardProps {
@@ -58,6 +59,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         ((product.originalPrice - product.price) / product.originalPrice) * 100,
       )
     : null;
+
+  /* Local area placeholders — deterministic per product id */
+  const localAreas = ['Napier Town', 'Wright Town', 'Madan Mahal', 'Gorakhpur', 'Adhartal', 'Vijay Nagar', 'Gwarighat'];
+  const areaIndex = typeof product.id === 'string'
+    ? product.id.charCodeAt(product.id.length - 1) % localAreas.length
+    : (product.id as number) % localAreas.length;
+  const vendorDisplay = product.vendorName || 'Local Vendor';
+  const areaDisplay = localAreas[areaIndex];
 
   const handleAddToCart = useCallback(
     async (e: React.MouseEvent) => {
@@ -113,6 +122,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {discount && (
         <div className="absolute top-3 right-3 z-10 px-2 py-1 rounded-lg bg-red-500/90 text-white text-[10px] font-bold">
           -{discount}%
+        </div>
+      )}
+
+      {/* Local Seller Badge */}
+      {!product.badge && (
+        <div className="absolute top-3 left-3 z-10 px-2 py-1 rounded-lg bg-primary-500/90 text-neutral-900 text-[10px] font-bold uppercase tracking-wider">
+          Local Seller
         </div>
       )}
 
@@ -197,6 +213,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <h3 className="text-sm font-medium text-neutral-100 leading-snug line-clamp-1">
           {product.name}
         </h3>
+
+        {/* Vendor & Locality */}
+        <p className="text-[11px] text-neutral-500 leading-snug line-clamp-1">
+          {vendorDisplay} • {areaDisplay}
+        </p>
+
+        {/* Local Delivery */}
+        <div className="flex items-center gap-1 mt-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-emerald-500/70" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+            <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-1h3.05a2.5 2.5 0 014.9 0H19a1 1 0 001-1v-4a1 1 0 00-.293-.707l-3-3A1 1 0 0016 5h-3V4a1 1 0 00-1-1H3zm10 2h2.586L18 8.414V12h-1.05a2.5 2.5 0 00-4.9 0H11V6h2z" />
+          </svg>
+          <span className="text-[10px] text-emerald-500/70">Fast local delivery</span>
+        </div>
 
         {/* Rating */}
         <div className="flex items-center gap-2 mt-0.5">

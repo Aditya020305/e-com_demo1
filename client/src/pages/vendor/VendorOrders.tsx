@@ -126,13 +126,13 @@ const VendorOrders: React.FC = () => {
   return (
     <VendorLayout>
       {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100">
-            Vendor <span className="text-gradient-gold">Orders</span>
+            Customer <span className="text-gradient-gold">Orders</span> for Your Shop
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            {orders.length} {orders.length === 1 ? 'order' : 'orders'} containing your products
+          <p className="mt-1 text-sm text-neutral-400">
+            Track and manage purchases placed by customers across the city.
           </p>
         </div>
         {error && (
@@ -141,6 +141,33 @@ const VendorOrders: React.FC = () => {
           </Button>
         )}
       </div>
+
+      {/* ── Quick Stats Row ── */}
+      {orders.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {[
+            { label: 'Total Orders', value: orders.length, color: 'text-neutral-100' },
+            { label: 'Delivered', value: orders.filter(o => o.isDelivered).length, color: 'text-emerald-400' },
+            { label: 'Pending', value: orders.filter(o => !o.isDelivered).length, color: 'text-amber-400' },
+          ].map((s) => (
+            <div key={s.label} className="rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-3 text-center">
+              <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+              <p className="text-[10px] text-neutral-500 uppercase tracking-wider font-medium mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Seller Context Banner */}
+      {orders.length > 0 && (
+        <div className="mb-6 flex items-center gap-2 rounded-xl border border-primary-500/15 bg-primary-500/5 px-4 py-2">
+          <span className="text-sm flex-shrink-0">📦</span>
+          <p className="text-xs text-neutral-300 font-medium">
+            Serving local customers across Jabalpur.
+            <span className="text-neutral-500 font-normal ml-1">· Orders from trusted marketplace customers</span>
+          </p>
+        </div>
+      )}
 
       {/* ── Error Banner ── */}
       {error && (
@@ -160,9 +187,12 @@ const VendorOrders: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-neutral-200 mb-2">No orders yet</h2>
-          <p className="text-sm text-neutral-500 max-w-sm mx-auto">
-            Orders containing your products will appear here once customers start purchasing.
+          <h2 className="text-xl font-semibold text-neutral-200 mb-2">No customer orders yet</h2>
+          <p className="text-sm text-neutral-500 max-w-sm mx-auto mb-2">
+            Customer orders for your shop will appear here.
+          </p>
+          <p className="text-xs text-neutral-600 max-w-xs mx-auto">
+            Keep growing your product catalog to reach more local buyers in Jabalpur.
           </p>
         </div>
       ) : (

@@ -3,9 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../store/CartContext';
 import { useAuth } from '../hooks/useAuth';
 import { createOrder } from '../services/orderService';
+import { createRazorpayOrder, verifyRazorpayPayment } from '../services/orderService'; // RAZORPAY INTEGRATION
 import type { ShippingAddress } from '../services/orderService';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
+
+// RAZORPAY INTEGRATION START
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+// RAZORPAY INTEGRATION END
 
 /* ── Types ── */
 interface FormState {
@@ -30,7 +39,8 @@ const PAYMENT_METHODS = [
    ======================================== */
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  // RAZORPAY INTEGRATION: extract user for prefill
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const { cartItems, totalPrice, loading: cartLoading, clearCart, fetchCart } = useCart();
 
   const [form, setForm] = useState<FormState>({
@@ -106,6 +116,14 @@ const Checkout: React.FC = () => {
         paymentMethod: form.paymentMethod,
       });
 
+      // RAZORPAY INTEGRATION START
+      // For any online payment method (non-COD), open Razorpay checkout
+      if (form.paymentMethod !== 'COD') {
+        await handleRazorpayPayment(response.data._id, response.data.totalPrice, response.data);
+        return; // handleRazorpayPayment manages navigation
+      }
+      // RAZORPAY INTEGRATION END
+
       // Clear local cart state (backend already emptied the cart)
       clearCart();
 
@@ -132,6 +150,81 @@ const Checkout: React.FC = () => {
     }
   };
 
+  // RAZORPAY INTEGRATION START
+  const handleRazorpayPayment = async (orderId: string, amount: number, orderData: any) => {
+    try {
+      // Step 1: Create Razorpay order on backend
+      const razorpayRes = await createRazorpayOrder(orderId);
+      const { razorpayOrderId, keyId } = razorpayRes.data;
+
+      // Step 2: Open Razorpay checkout modal
+      const options = {
+        key: keyId,
+        amount: razorpayRes.data.amount,
+        currency: razorpayRes.data.currency,
+        name: 'JabalpurMart',
+        description: `Order #${orderId.slice(-8)}`,
+        order_id: razorpayOrderId,
+        handler: async (response: any) => {
+          try {
+            // Step 3: Verify payment on backend
+            await verifyRazorpayPayment({
+              orderId,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            // Step 4: Clear cart and navigate to success
+            clearCart();
+            navigate('/order-success', {
+              state: {
+                orderId: orderData._id,
+                totalPrice: orderData.totalPrice,
+                orderItems: orderData.orderItems,
+                shippingAddress: orderData.shippingAddress,
+                paymentMethod: orderData.paymentMethod,
+                createdAt: orderData.createdAt,
+                isPaid: true, // Payment verified
+              },
+              replace: true,
+            });
+          } catch (verifyErr: any) {
+            setApiError(
+              verifyErr?.response?.data?.message ||
+              'Payment verification failed. Contact support.'
+            );
+            setSubmitting(false);
+          }
+        },
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+        },
+        theme: {
+          color: '#4F46E5',
+        },
+        modal: {
+          ondismiss: () => {
+            setApiError('Payment was cancelled. Your order is saved — you can retry payment from Orders page.');
+            setSubmitting(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to initiate payment. Please try again.';
+      setApiError(message);
+      setSubmitting(false);
+    }
+  };
+  // RAZORPAY INTEGRATION END
+
   /* ── Auth loading ── */
   if (authLoading) {
     return (
@@ -146,7 +239,7 @@ const Checkout: React.FC = () => {
     return (
       <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-8">Checkout</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-8">Secure Checkout</h1>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-4">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -181,9 +274,9 @@ const Checkout: React.FC = () => {
               />
             </svg>
           }
-          title="Your cart is empty"
-          description="Add items to your cart before checking out."
-          actionLabel="Browse Products"
+          title="Your local shopping cart is empty"
+          description="Explore products from nearby vendors in Jabalpur."
+          actionLabel="Browse Local Products"
           onAction={() => navigate('/')}
         />
       </section>
@@ -202,7 +295,32 @@ const Checkout: React.FC = () => {
     <section className="bg-neutral-900 min-h-[calc(100vh-4rem)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-8">
         {/* ── Page Title ── */}
-        <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-8">Checkout</h1>
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100">
+            Secure Checkout for <span className="text-gradient-gold">Local Orders</span>
+          </h1>
+          <p className="mt-2 text-sm text-neutral-400">
+            Ordering from trusted vendors across Jabalpur.
+          </p>
+        </div>
+
+        {/* ── Trust Badges ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+          {[
+            { icon: '🔒', text: 'Secure Razorpay Payments', accent: 'border-emerald-500/20 bg-emerald-500/5' },
+            { icon: '✅', text: 'Trusted Local Vendors', accent: 'border-primary-500/20 bg-primary-500/5' },
+            { icon: '🚚', text: 'Fast Jabalpur Delivery', accent: 'border-blue-500/20 bg-blue-500/5' },
+            { icon: '💬', text: 'Local Customer Support', accent: 'border-purple-500/20 bg-purple-500/5' },
+          ].map((badge) => (
+            <div
+              key={badge.text}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs text-neutral-300 transition-all duration-200 hover:scale-[1.02] ${badge.accent}`}
+            >
+              <span className="text-base flex-shrink-0">{badge.icon}</span>
+              <span className="font-medium leading-tight">{badge.text}</span>
+            </div>
+          ))}
+        </div>
 
         {/* ── API Error Banner ── */}
         {apiError && (
@@ -234,12 +352,18 @@ const Checkout: React.FC = () => {
             <div className="lg:col-span-2 space-y-6">
               {/* ── Shipping Details Card ── */}
               <div className="rounded-xl border border-neutral-800 bg-neutral-800/60 p-4 sm:p-6">
-                <h2 className="text-lg font-bold text-neutral-100 mb-6 flex items-center gap-2">
+                <h2 className="text-lg font-bold text-neutral-100 mb-2 flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-400" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                   </svg>
-                  Shipping Address
+                  Delivery Location
                 </h2>
+                <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 mb-6 ml-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xs text-emerald-300/80 font-medium">Most orders are delivered quickly within Jabalpur city limits.</span>
+                </div>
 
                 <div className="space-y-4">
                   {/* Address */}
@@ -280,7 +404,7 @@ const Checkout: React.FC = () => {
                         type="text"
                         value={form.city}
                         onChange={handleChange}
-                        placeholder="Mumbai"
+                        placeholder="Jabalpur"
                         disabled={submitting}
                         className={inputClass('city')}
                       />
@@ -387,6 +511,14 @@ const Checkout: React.FC = () => {
                 {errors.paymentMethod && (
                   <p className="mt-2 text-xs text-red-400">{errors.paymentMethod}</p>
                 )}
+
+                {/* Secure payment note */}
+                <div className="mt-4 flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xs text-emerald-300/80 font-medium">Payments secured via Razorpay</span>
+                </div>
               </div>
             </div>
 
@@ -395,7 +527,10 @@ const Checkout: React.FC = () => {
                ══════════════════════════════ */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 rounded-xl border border-neutral-800 bg-neutral-800/60 p-4 sm:p-6">
-                <h2 className="text-lg font-bold text-neutral-100 mb-6">
+                <h2 className="text-lg font-bold text-neutral-100 mb-6 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
+                  </svg>
                   Order Summary
                 </h2>
 
@@ -442,6 +577,11 @@ const Checkout: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Local support note */}
+                <div className="flex items-center justify-center gap-1.5 rounded-full bg-primary-500/10 border border-primary-500/15 px-3 py-1.5 mb-4">
+                  <span className="text-[11px] text-primary-300/80 font-medium">Supporting local businesses with every purchase ❤️</span>
+                </div>
+
                 {/* Place Order Button */}
                 <Button
                   type="submit"
@@ -451,14 +591,14 @@ const Checkout: React.FC = () => {
                   loading={submitting}
                   disabled={submitting}
                 >
-                  {submitting ? 'Placing Order…' : 'Place Order'}
+                  {submitting ? 'Placing Order…' : 'Confirm Local Order'}
                 </Button>
 
                 {/* Secure note */}
-                <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-neutral-600">
+                <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-neutral-500">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3"
+                    className="h-3 w-3 text-emerald-500/60"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -468,7 +608,7 @@ const Checkout: React.FC = () => {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Secure SSL encrypted checkout
+                  Secure checkout powered by Razorpay
                 </div>
               </div>
             </div>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import type { ProductData } from '../components/ProductCard';
 import SkeletonCard from '../components/ui/SkeletonCard';
@@ -18,12 +19,14 @@ const mapProduct = (p: ApiProduct): ProductData => ({
   category: p.category,
   rating: 4.5,
   reviews: 0,
+  vendorName: p.vendor?.name,
 });
 
 /* ========================================
    Products Page — Full Catalog
    ======================================== */
 const Products: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<ProductData[]>([]);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +34,7 @@ const Products: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>(['All']);
   const [searchInterpretation, setSearchInterpretation] = useState<string | null>(null);
+  const initialCategoryApplied = useRef(false);
 
   const fetchProducts = useCallback(async (keyword?: string) => {
     setLoading(true);
@@ -51,9 +55,29 @@ const Products: React.FC = () => {
     }
   }, []);
 
+  /* ── Scroll to top on mount (fixes "View All" landing mid-page) ── */
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  /* ── Auto-apply category from query param (e.g. /products?category=Electronics) ── */
+  useEffect(() => {
+    if (initialCategoryApplied.current) return;
+    const catParam = searchParams.get('category');
+    if (catParam && categories.length > 1) {
+      const match = categories.find(
+        (c) => c.toLowerCase() === catParam.toLowerCase(),
+      );
+      if (match) {
+        setActiveCategory(match);
+      }
+      initialCategoryApplied.current = true;
+    }
+  }, [searchParams, categories]);
 
   const handleSearch = useCallback(() => {
     setActiveCategory('All');
@@ -83,11 +107,12 @@ const Products: React.FC = () => {
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-20">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl font-bold text-neutral-100">
-            All <span className="text-gradient-gold">Products</span>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-neutral-100">
+            Shop from Local Vendors{' '}
+            <span className="text-gradient-gold">in Jabalpur</span>
           </h1>
-          <p className="mt-3 text-neutral-500 text-sm sm:text-base max-w-xl mx-auto">
-            Browse our complete catalog of premium products from top-rated vendors
+          <p className="mt-4 text-neutral-500 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+            Discover products from trusted shops and businesses across your city.
           </p>
         </div>
 
@@ -107,7 +132,7 @@ const Products: React.FC = () => {
             </svg>
             <input
               type="text"
-              placeholder="Try 'budget headphones' or 'premium laptop'..."
+              placeholder="Search local products and shops..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleSearchKeyDown}
@@ -140,7 +165,7 @@ const Products: React.FC = () => {
           </div>
         )}
 
-        {/* Category Filter — ALL categories */}
+        {/* Category Filter — Local Shop Categories */}
         <div className="flex gap-2 mb-10 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-center scrollbar-hide">
           {categories.map((cat) => (
             <button
@@ -204,8 +229,8 @@ const Products: React.FC = () => {
                 />
               </svg>
             }
-            title="No products found"
-            description="Try adjusting your search or filters"
+            title="No local products found right now"
+            description="Try exploring different categories or check back soon."
             actionLabel="Clear Filters"
             onAction={handleClearSearch}
           />
@@ -213,8 +238,8 @@ const Products: React.FC = () => {
           <>
             {/* Results count */}
             <p className="text-neutral-500 text-sm mb-6 text-center">
-              Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
-              {activeCategory !== 'All' ? ` in ${activeCategory}` : ''}
+              Showing {filteredProducts.length} local product{filteredProducts.length !== 1 ? 's' : ''}
+              {activeCategory !== 'All' ? ` in ${activeCategory}` : ' from Jabalpur vendors'}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredProducts.map((product) => (

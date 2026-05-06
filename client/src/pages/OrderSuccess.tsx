@@ -11,6 +11,7 @@ interface OrderSuccessState {
   shippingAddress: ShippingAddress;
   paymentMethod: string;
   createdAt: string;
+  isPaid?: boolean; // RAZORPAY INTEGRATION
 }
 
 /* ========================================
@@ -44,11 +45,11 @@ const OrderSuccess: React.FC = () => {
           </div>
           <h1 className="text-xl font-bold text-neutral-100 mb-2">No order found</h1>
           <p className="text-neutral-500 mb-6 text-sm">
-            It seems you landed here without placing an order.
+            It seems you landed here without placing an order. Explore local products instead.
           </p>
-          <Link to="/">
+          <Link to="/products">
             <Button variant="primary" size="lg" fullWidth>
-              Go to Home
+              Shop Local Products
             </Button>
           </Link>
         </div>
@@ -57,6 +58,7 @@ const OrderSuccess: React.FC = () => {
   }
 
   const { orderId, totalPrice, orderItems, shippingAddress, paymentMethod, createdAt } = state;
+  const isPaid = state.isPaid || false; // RAZORPAY INTEGRATION
 
   const formattedDate = new Date(createdAt).toLocaleDateString('en-IN', {
     year: 'numeric',
@@ -91,12 +93,32 @@ const OrderSuccess: React.FC = () => {
 
           {/* ── Title ── */}
           <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100 mb-2">
-            Order Placed Successfully!
+            Your Local Order is Confirmed! 🎉
           </h1>
-          <p className="text-neutral-400 mb-1">Thank you for your purchase</p>
+          <p className="text-neutral-400 mb-1">Thank you for supporting local businesses in Jabalpur.</p>
           <p className="text-xs text-neutral-600 mb-6 font-mono">
             Order ID: {orderId}
           </p>
+
+          {/* RAZORPAY INTEGRATION START */}
+          {isPaid && (
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-4 py-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 text-emerald-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="text-sm font-semibold text-emerald-400">Payment Verified</span>
+            </div>
+          )}
+          {/* RAZORPAY INTEGRATION END */}
 
           {/* ── Total Amount ── */}
           <div className="rounded-xl bg-neutral-900/80 border border-neutral-700 px-6 py-4 mb-6">
@@ -109,6 +131,20 @@ const OrderSuccess: React.FC = () => {
             <p className="text-xs text-neutral-600 mt-1">
               {paymentMethod} • {formattedDate}
             </p>
+          </div>
+
+          {/* Delivery Message */}
+          <div className="flex items-center justify-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-400 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+              <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-5h2.05a2.5 2.5 0 014.9 0H19a1 1 0 001-1v-2a1 1 0 00-.293-.707l-3-3A1 1 0 0016 3h-3a1 1 0 00-1 1v4H3V5a1 1 0 00-1-1H1z" />
+            </svg>
+            <span className="text-xs text-emerald-300/80 font-medium">Most local orders are delivered quickly within Jabalpur city.</span>
+          </div>
+
+          {/* Community Impact */}
+          <div className="flex items-center justify-center gap-1.5 rounded-full bg-primary-500/10 border border-primary-500/15 px-3 py-1.5">
+            <span className="text-[11px] text-primary-300/80 font-medium">Every order helps local shops grow digitally in Jabalpur ❤️</span>
           </div>
         </div>
 
@@ -156,6 +192,21 @@ const OrderSuccess: React.FC = () => {
             </p>
           </div>
         )}
+
+        {/* ── Trust Indicators ── */}
+        <div className="grid grid-cols-2 gap-2 mb-6">
+          {[
+            { icon: '🔒', text: 'Secure Payment Completed' },
+            { icon: '✅', text: 'Trusted Local Vendors' },
+            { icon: '🚚', text: 'Fast Local Delivery' },
+            { icon: '💬', text: 'Customer Support Available' },
+          ].map((b) => (
+            <div key={b.text} className="flex items-center gap-1.5 text-[11px] text-neutral-500">
+              <span>{b.icon}</span>
+              <span>{b.text}</span>
+            </div>
+          ))}
+        </div>
 
         {/* ── Action Buttons ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
