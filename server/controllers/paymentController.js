@@ -2,6 +2,7 @@
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const Order = require("../models/Order");
+const Cart = require("../models/Cart");
 
 const razorpayInstance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -107,6 +108,13 @@ const verifyRazorpayPayment = async (req, res) => {
   order.razorpayPaymentId = razorpay_payment_id;
   order.razorpaySignature = razorpay_signature;
   await order.save();
+
+  // Clear the user's cart now that payment is confirmed
+  const cart = await Cart.findOne({ user: req.user._id });
+  if (cart) {
+    cart.items = [];
+    await cart.save();
+  }
 
   res.json({
     success: true,

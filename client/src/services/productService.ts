@@ -102,3 +102,31 @@ export const updateProduct = async (
   }>(`/products/${id}`, payload);
   return data;
 };
+
+/* ── FormData-based product creation (supports file uploads) ── */
+export const createProductWithMedia = async (
+  formData: FormData
+): Promise<{ success: boolean; message: string; data: ApiProduct }> => {
+  const { data } = await API.post<{
+    success: boolean;
+    message: string;
+    data: ApiProduct;
+  }>("/products", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+};
+
+export const updateProductWithMedia = async (
+  id: string,
+  formData: FormData
+): Promise<{ success: boolean; message: string; data: ApiProduct }> => {
+  const { data } = await API.put<{
+    success: boolean;
+    message: string;
+    data: ApiProduct;
+  }>(`/products/${id}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+};

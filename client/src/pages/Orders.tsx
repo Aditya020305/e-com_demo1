@@ -18,10 +18,34 @@ declare global {
 // RAZORPAY INTEGRATION END
 
 /* ── Status Badge ── */
-const StatusBadge: React.FC<{ delivered: boolean; paid: boolean }> = ({
+const StatusBadge: React.FC<{ delivered: boolean; paid: boolean; orderStatus?: string }> = ({
   delivered,
   paid,
+  orderStatus,
 }) => {
+  // Show order tracking status if available
+  if (orderStatus && orderStatus !== 'Pending') {
+    const statusColors: Record<string, string> = {
+      'Accepted': 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+      'Packing': 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+      'Shipped': 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
+      'Out For Delivery': 'bg-orange-500/10 text-orange-400 border border-orange-500/20',
+      'Delivered': 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+    };
+    const dotColors: Record<string, string> = {
+      'Accepted': 'bg-blue-400',
+      'Packing': 'bg-purple-400',
+      'Shipped': 'bg-indigo-400',
+      'Out For Delivery': 'bg-orange-400',
+      'Delivered': 'bg-emerald-400',
+    };
+    return (
+      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${statusColors[orderStatus] || 'bg-neutral-500/10 text-neutral-400 border border-neutral-500/20'}`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${dotColors[orderStatus] || 'bg-neutral-400'}`} />
+        {orderStatus}
+      </span>
+    );
+  }
   if (delivered) {
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -305,6 +329,7 @@ const Orders: React.FC = () => {
                     <StatusBadge
                       delivered={order.isDelivered}
                       paid={order.isPaid}
+                      orderStatus={order.orderStatus}
                     />
                   </div>
                 </div>
@@ -350,7 +375,7 @@ const Orders: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-4">
                     {/* RAZORPAY INTEGRATION START */}
-                    {order.paymentMethod !== 'COD' && !order.isPaid && (
+                    {!order.isPaid && (
                       <Button
                         variant="secondary"
                         size="sm"

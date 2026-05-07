@@ -6,16 +6,15 @@ import SkeletonCard from '../components/ui/SkeletonCard';
 import EmptyState from '../components/ui/EmptyState';
 import { getProducts } from '../services/productService';
 import type { ApiProduct } from '../services/productService';
+import { getProductThumbnail } from '../utils/imageHelper';
 
-/* ── Fallback product image ── */
-const FALLBACK_IMAGE = '/products/headphones.png';
 
 /* ── Map API product to UI ProductData ── */
 const mapProduct = (p: ApiProduct): ProductData => ({
   id: p._id,
   name: p.name,
   price: p.price,
-  image: p.images && p.images.length > 0 ? p.images[0] : FALLBACK_IMAGE,
+  image: getProductThumbnail(p.images, p.category),
   category: p.category,
   rating: 4.5,
   reviews: 0,

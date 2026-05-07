@@ -14,13 +14,28 @@ const createProduct = async (req, res) => {
     throw new Error("Please provide name, description, price, and category");
   }
 
+  // Merge uploaded file paths with any URL-based images from the body
+  let imageArray = [];
+  if (req.files && req.files.length > 0) {
+    imageArray = req.files.map((file) => `/uploads/products/${file.filename}`);
+  }
+  if (images) {
+    // images can be a string (single URL), array, or comma-separated string
+    const urlImages = Array.isArray(images)
+      ? images
+      : typeof images === "string"
+        ? images.split(",").map((u) => u.trim()).filter(Boolean)
+        : [];
+    imageArray = [...imageArray, ...urlImages];
+  }
+
   const product = await Product.create({
     name,
     description,
     price,
     category,
     stock: stock || 0,
-    images: images || [],
+    images: imageArray,
     vendor: req.user._id,
   });
 
@@ -233,6 +248,21 @@ const updateProduct = async (req, res) => {
     if (req.body[field] !== undefined) {
       updates[field] = req.body[field];
     }
+  }
+
+  // Handle uploaded files — merge with any URL images
+  if (req.files && req.files.length > 0) {
+    const uploadedPaths = req.files.map((file) => `/uploads/products/${file.filename}`);
+    const existingImages = updates.images
+      ? (Array.isArray(updates.images)
+          ? updates.images
+          : typeof updates.images === "string"
+            ? updates.images.split(",").map((u) => u.trim()).filter(Boolean)
+            : [])
+      : [];
+    updates.images = [...uploadedPaths, ...existingImages];
+  } else if (updates.images && typeof updates.images === "string") {
+    updates.images = updates.images.split(",").map((u) => u.trim()).filter(Boolean);
   }
 
   const updatedProduct = await Product.findByIdAndUpdate(

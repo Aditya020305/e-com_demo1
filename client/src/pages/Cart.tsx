@@ -6,6 +6,7 @@ import { getProducts } from '../services/productService';
 import type { ApiProduct } from '../services/productService';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
+import { getProductThumbnail } from '../utils/imageHelper';
 
 /* ========================================
    Cart Page
@@ -288,7 +289,7 @@ const Cart: React.FC = () => {
         {/* Continue Shopping */}
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-primary-400 transition-colors duration-200"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary-500 text-neutral-900 font-semibold text-sm hover:bg-primary-400 transition-all duration-200 shadow-gold"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -338,7 +339,7 @@ const Cart: React.FC = () => {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {suggestions.map((product) => {
-                const img = product.images && product.images.length > 0 ? product.images[0] : '/products/headphones.png';
+                const img = getProductThumbnail(product.images, product.category);
                 const isAdding = addingSuggestionId === product._id;
                 return (
                   <div

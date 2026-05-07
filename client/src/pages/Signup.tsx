@@ -96,6 +96,8 @@ const Signup: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const currentErrors = validateForm(form);
   const hasErrors = Object.keys(currentErrors).length > 0;
@@ -155,7 +157,10 @@ const Signup: React.FC = () => {
     placeholder: string,
     label: string,
     icon: React.ReactNode,
-  ) => (
+    passwordToggle?: { show: boolean; setShow: React.Dispatch<React.SetStateAction<boolean>> },
+  ) => {
+    const effectiveType = passwordToggle ? (passwordToggle.show ? 'text' : 'password') : type;
+    return (
     <div>
       <label htmlFor={id} className="mb-1.5 block text-xs font-semibold text-neutral-400 uppercase tracking-wider">
         {label}
@@ -167,14 +172,33 @@ const Signup: React.FC = () => {
         <input
           id={id}
           name={name}
-          type={type}
+          type={effectiveType}
           value={form[name]}
           onChange={handleChange}
           onBlur={handleBlur}
           placeholder={placeholder}
           aria-invalid={showError(name)}
-          className={`block w-full rounded-xl border bg-white/5 backdrop-blur-sm py-3.5 pl-12 pr-4 text-sm text-neutral-100 placeholder:text-neutral-500 shadow-inner shadow-black/20 transition-all duration-200 focus:ring-2 focus:outline-none ${inputBorder(name)}`}
+          className={`block w-full rounded-xl border bg-white/5 backdrop-blur-sm py-3.5 pl-12 ${passwordToggle ? 'pr-12' : 'pr-4'} text-sm text-neutral-100 placeholder:text-neutral-500 shadow-inner shadow-black/20 transition-all duration-200 focus:ring-2 focus:outline-none ${inputBorder(name)}`}
         />
+        {passwordToggle && (
+          <button
+            type="button"
+            onClick={() => passwordToggle.setShow((prev) => !prev)}
+            className="absolute inset-y-0 right-0 flex items-center pr-4 text-neutral-500 hover:text-primary-400 transition-colors duration-200"
+            aria-label={passwordToggle.show ? 'Hide password' : 'Show password'}
+          >
+            {passwordToggle.show ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l18 18" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            )}
+          </button>
+        )}
       </div>
       <div className={`overflow-hidden transition-all duration-200 ease-in-out ${showError(name) ? 'max-h-8 opacity-100 mt-1.5' : 'max-h-0 opacity-0'}`}>
         <p className="flex items-center gap-1 text-xs font-medium text-red-400">
@@ -186,6 +210,7 @@ const Signup: React.FC = () => {
       </div>
     </div>
   );
+  };
 
   /* Icons */
   const userIcon = (
@@ -257,8 +282,8 @@ const Signup: React.FC = () => {
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
             {renderField('signup-name', 'name', 'text', 'John Doe', 'Full Name', userIcon)}
             {renderField('signup-email', 'email', 'email', 'you@example.com', 'Email Address', emailIcon)}
-            {renderField('signup-password', 'password', 'password', '••••••••', 'Password', lockIcon)}
-            {renderField('signup-confirm', 'confirmPassword', 'password', '••••••••', 'Confirm Password', lockIcon)}
+            {renderField('signup-password', 'password', 'password', '••••••••', 'Password', lockIcon, { show: showPassword, setShow: setShowPassword })}
+            {renderField('signup-confirm', 'confirmPassword', 'password', '••••••••', 'Confirm Password', lockIcon, { show: showConfirmPassword, setShow: setShowConfirmPassword })}
 
             {/* Terms */}
             <label className="flex items-start gap-2 text-sm text-neutral-400 cursor-pointer select-none pt-1">

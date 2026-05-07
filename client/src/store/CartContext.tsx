@@ -6,6 +6,7 @@ import {
   removeCartItem as apiRemoveCartItem,
 } from '../services/cartService';
 import type { CartItem as ApiCartItem } from '../services/cartService';
+import { getProductThumbnail } from '../utils/imageHelper';
 
 /* ── Types ── */
 export interface CartItem {
@@ -33,7 +34,7 @@ const mapItem = (item: ApiCartItem): CartItem => ({
   id: item.product._id,
   name: item.product.name,
   price: item.product.price,
-  image: item.product.images?.[0] || '/products/headphones.png',
+  image: getProductThumbnail(item.product.images, item.product.category),
   quantity: item.quantity,
 });
 

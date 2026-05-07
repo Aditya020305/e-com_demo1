@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import VendorLayout from '../../components/vendor/VendorLayout';
 import Button from '../../components/ui/Button';
-import { getProductById, updateProduct } from '../../services/productService';
+import { getProductById, updateProductWithMedia } from '../../services/productService';
+import { getImageSrc } from '../../utils/imageHelper';
 
 /* ── Types ── */
 interface FormState {
@@ -121,6 +122,9 @@ const EditProduct: React.FC = () => {
   const [isFetching, setIsFetching] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentErrors = validateForm(form);
 
@@ -143,8 +147,9 @@ const EditProduct: React.FC = () => {
           price: String(product.price),
           category: product.category,
           stock: String(product.stock),
-          images: product.images.join(', '),
+          images: '',
         });
+        setExistingImages(product.images || []);
       } catch (err: any) {
         const message =
           err?.response?.data?.message || 'Failed to load product. Please try again.';
@@ -180,19 +185,32 @@ const EditProduct: React.FC = () => {
 
       setIsLoading(true);
       try {
-        const imageArray = form.images.trim()
-          ? form.images.split(',').map((url) => url.trim()).filter(Boolean)
-          : [];
+        const formData = new FormData();
+        formData.append('name', form.name.trim());
+        formData.append('description', form.description.trim());
+        formData.append('price', form.price);
+        formData.append('category', form.category);
+        formData.append('stock', String(Number(form.stock) || 0));
 
-        await updateProduct(id, {
-          name: form.name.trim(),
-          description: form.description.trim(),
-          price: Number(form.price),
-          category: form.category,
-          stock: Number(form.stock) || 0,
-          images: imageArray,
+        // Append new uploaded files
+        mediaFiles.forEach((file) => {
+          formData.append('media', file);
         });
 
+        // Append existing images that haven't been removed
+        existingImages.forEach((url) => {
+          formData.append('images', url);
+        });
+
+        // Append any new URL-based images
+        if (form.images.trim()) {
+          const urlImages = form.images.split(',').map((u) => u.trim()).filter(Boolean);
+          urlImages.forEach((url) => {
+            formData.append('images', url);
+          });
+        }
+
+        await updateProductWithMedia(id, formData);
         navigate('/vendor/products');
       } catch (err: any) {
         const message =
@@ -202,7 +220,7 @@ const EditProduct: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [form, id, navigate],
+    [form, id, mediaFiles, existingImages, navigate],
   );
 
   const showError = (field: keyof FormErrors) =>
@@ -352,8 +370,84 @@ const EditProduct: React.FC = () => {
               </select>
             </FormField>
 
-            {/* Image URL */}
-            <FormField id="edit-images" label="Image URLs" error={undefined}>
+            {/* Existing Images */}
+            {existingImages.length > 0 && (
+              <FormField id="edit-existing" label="Current Images" error={undefined}>
+                <div className="flex flex-wrap gap-2">
+                  {existingImages.map((url, idx) => (
+                    <div key={idx} className="relative group">
+                      <div className="w-16 h-16 rounded-lg bg-neutral-700 overflow-hidden">
+                        <img src={getImageSrc(url)} alt={`Product ${idx + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExistingImages((prev) => prev.filter((_, i) => i !== idx))}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-1 text-[11px] text-neutral-500">
+                  {existingImages.length} existing image{existingImages.length !== 1 ? 's' : ''}. Hover to remove.
+                </p>
+              </FormField>
+            )}
+
+            {/* Media Upload */}
+            <FormField id="edit-media" label="Upload New Media" error={undefined}>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-neutral-600 bg-neutral-800/40 py-6 px-4 cursor-pointer hover:border-primary-500/50 hover:bg-neutral-800/60 transition-all duration-200"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-neutral-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-sm text-neutral-400 font-medium">Click to add images or videos</p>
+                <p className="text-[11px] text-neutral-500 mt-1">JPG, PNG, WEBP, MP4, WEBM — max 50MB each</p>
+                <input
+                  ref={fileInputRef}
+                  id="edit-media"
+                  type="file"
+                  multiple
+                  accept="image/*,video/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      setMediaFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                    }
+                  }}
+                />
+              </div>
+              {mediaFiles.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {mediaFiles.map((file, idx) => (
+                    <div key={idx} className="relative group">
+                      <div className="w-16 h-16 rounded-lg bg-neutral-700 overflow-hidden flex items-center justify-center">
+                        {file.type.startsWith('image/') ? (
+                          <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setMediaFiles((prev) => prev.filter((_, i) => i !== idx))}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </FormField>
+
+            {/* Additional Image URLs */}
+            <FormField id="edit-images" label="Additional Image URLs (optional)" error={undefined}>
               <input
                 id="edit-images"
                 name="images"
@@ -364,7 +458,7 @@ const EditProduct: React.FC = () => {
                 className={inputClass(false)}
               />
               <p className="mt-1 text-[11px] text-neutral-500">
-                Separate multiple image URLs with commas.
+                Optional: add more image URLs in addition to uploaded files.
               </p>
             </FormField>
 

@@ -7,6 +7,7 @@ import {
   deleteProduct,
 } from '../../services/productService';
 import type { ApiProduct } from '../../services/productService';
+import { getProductThumbnail } from '../../utils/imageHelper';
 
 /* ── Constants ── */
 const FALLBACK_IMAGE = '/products/headphones.png';
@@ -159,10 +160,7 @@ const VendorProducts: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => {
             const isDeleting = deletingId === product._id;
-            const image =
-              product.images && product.images.length > 0
-                ? product.images[0]
-                : FALLBACK_IMAGE;
+            const image = getProductThumbnail(product.images, product.category);
 
             return (
               <div

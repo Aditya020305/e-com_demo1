@@ -21,7 +21,7 @@ const sidebarLinks: SidebarLink[] = [
   },
   {
     to: '/vendor/products',
-    label: 'Shop Products',
+    label: 'Your Products',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -135,34 +135,19 @@ const VendorLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         </nav>
 
         {/* Bottom Section */}
-        <div className="px-3 py-4 border-t border-neutral-800 space-y-2">
-          <Link
-            to="/"
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-neutral-500 hover:text-neutral-100 hover:bg-neutral-800/80 transition-all duration-200"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
-            </svg>
-            Back to Store
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400/80 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Logout
-          </button>
+        <div className="px-3 py-4 border-t border-neutral-800">
+          <p className="px-4 text-[10px] text-neutral-600 text-center">
+            Seller Panel · Jabalpur
+          </p>
         </div>
       </aside>
 
       {/* ── Main Content Area ── */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Desktop Header with Greeting + Logout */}
-        <div className="hidden md:flex items-center justify-between px-8 py-3 bg-neutral-950/80 backdrop-blur-sm border-b border-neutral-800 sticky top-16 z-20">
-          <span className="text-sm text-neutral-400">
-            Welcome back, <span className="text-primary-400 font-semibold">{user?.name?.split(' ')[0] || 'Vendor'}</span>
+        {/* Desktop Header with Context + Logout */}
+        <div className="hidden md:flex items-center justify-between px-8 py-3 bg-neutral-950 border-b border-neutral-800 sticky top-16 z-20">
+          <span className="text-sm text-neutral-500">
+            Seller Panel
           </span>
           <button
             onClick={handleLogout}
@@ -175,7 +160,7 @@ const VendorLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           </button>
         </div>
 
-        {/* Mobile Header with Toggle + Greeting + Logout */}
+        {/* Mobile Header with Toggle + Context + Logout */}
         <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-neutral-950 border-b border-neutral-800 sticky top-16 z-20">
           <button
             id="vendor-sidebar-toggle"
@@ -187,8 +172,8 @@ const VendorLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="text-sm text-neutral-400 flex-1">
-            Hi, <span className="text-primary-400 font-medium">{user?.name?.split(' ')[0] || 'Vendor'}</span>
+          <span className="text-sm text-neutral-500 flex-1">
+            Seller Panel
           </span>
           <button
             onClick={handleLogout}

@@ -7,9 +7,9 @@ import SkeletonCard from '../components/ui/SkeletonCard';
 import { getProducts } from '../services/productService';
 import type { ApiProduct } from '../services/productService';
 import { getPreferredCategories, getRecentlyViewed } from '../utils/behaviorTracker';
+import { useAuth } from '../hooks/useAuth';
+import { getProductThumbnail } from '../utils/imageHelper';
 
-/* ── Constants ── */
-const FALLBACK_IMAGE = '/products/headphones.png';
 const FEATURED_PRODUCT_COUNT = 8;
 const FEATURED_CATEGORY_COUNT = 5;
 
@@ -18,7 +18,7 @@ const mapProduct = (p: ApiProduct): ProductData => ({
   id: p._id,
   name: p.name,
   price: p.price,
-  image: p.images && p.images.length > 0 ? p.images[0] : FALLBACK_IMAGE,
+  image: getProductThumbnail(p.images, p.category),
   category: p.category,
   rating: 4.5,
   reviews: 0,
@@ -28,6 +28,7 @@ const mapProduct = (p: ApiProduct): ProductData => ({
    Home Page — Curated Featured Content
    ======================================== */
 const Home: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const [featuredProducts, setFeaturedProducts] = useState<ProductData[]>([]);
   const [featuredCategories, setFeaturedCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,14 +140,16 @@ const Home: React.FC = () => {
             <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/products">
                 <Button variant="primary" size="lg" className="px-8 py-3.5 text-lg">
-                  Shop Local
+                  {isAuthenticated ? 'Shop Now' : 'Shop Local'}
                 </Button>
               </Link>
-              <Link to="/vendor/register">
-                <Button variant="outline" size="lg" className="px-8 py-3.5 text-lg">
-                  Become a Vendor
-                </Button>
-              </Link>
+              {!isAuthenticated && (
+                <Link to="/vendor/register">
+                  <Button variant="outline" size="lg" className="px-8 py-3.5 text-lg">
+                    Become a Vendor
+                  </Button>
+                </Link>
+              )}
             </div>
 
             {/* Trust Badges */}
@@ -310,7 +313,7 @@ const Home: React.FC = () => {
       {/* ══════════════════════════════════════
          RECOMMENDED FOR YOU
          ══════════════════════════════════════ */}
-      {recsAvailable && personalRecs.length > 0 && (
+      {isAuthenticated && recsAvailable && personalRecs.length > 0 && (
         <section className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16">
           <div className="flex items-center justify-between mb-10">
             <div>
@@ -349,6 +352,7 @@ const Home: React.FC = () => {
       {/* ══════════════════════════════════════
          FEATURED LOCAL VENDORS
          ══════════════════════════════════════ */}
+      {!isAuthenticated && (
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16">
         {/* Section Header */}
         <div className="text-center mb-10">
@@ -449,6 +453,7 @@ const Home: React.FC = () => {
           </Link>
         </div>
       </section>
+      )}
 
       {/* ══════════════════════════════════════
          FEATURES STRIP

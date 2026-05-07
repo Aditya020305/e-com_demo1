@@ -26,6 +26,7 @@ export interface Order {
   paidAt?: string;
   isDelivered: boolean;
   deliveredAt?: string;
+  orderStatus?: string;
   // RAZORPAY INTEGRATION START
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
@@ -97,6 +98,7 @@ export interface VendorOrder {
   isDelivered: boolean;
   deliveredAt?: string;
   isReturned?: boolean;
+  orderStatus?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -108,6 +110,17 @@ export const getVendorOrders = async (): Promise<VendorOrder[]> => {
     data: VendorOrder[];
   }>("/orders/vendor");
   return data.data;
+};
+
+export const updateOrderStatus = async (
+  orderId: string,
+  orderStatus: string
+): Promise<{ success: boolean; message: string }> => {
+  const { data } = await API.put<{ success: boolean; message: string }>(
+    `/orders/${orderId}/status`,
+    { orderStatus }
+  );
+  return data;
 };
 
 // RAZORPAY INTEGRATION START

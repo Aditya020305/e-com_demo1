@@ -5,6 +5,7 @@ const {
   getOrderById,
   returnOrder,
   getVendorOrders,
+  updateOrderStatus,
 } = require("../controllers/orderController");
 const { protect } = require("../middleware/authMiddleware");
 const { vendorOnly } = require("../middleware/vendorOnly");
@@ -20,5 +21,6 @@ router.get("/vendor", protect, vendorOnly, asyncHandler(getVendorOrders));
 
 router.get("/:id", protect, asyncHandler(getOrderById));
 router.post("/:id/return", protect, asyncHandler(returnOrder));
+router.put("/:id/status", protect, vendorOnly, asyncHandler(updateOrderStatus));
 
 module.exports = router;

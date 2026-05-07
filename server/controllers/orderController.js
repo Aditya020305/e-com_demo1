@@ -74,8 +74,12 @@ const createOrder = async (req, res) => {
     paymentMethod,
   });
 
-  cart.items = [];
-  await cart.save();
+  // For COD orders, clear cart immediately since no payment step follows.
+  // For online payments, cart is cleared after payment verification (see paymentController).
+  if (paymentMethod === "COD") {
+    cart.items = [];
+    await cart.save();
+  }
 
   /* ── Increment order counters ── */
   await User.findByIdAndUpdate(req.user._id, { $inc: { totalOrders: 1 } });
@@ -205,5 +209,53 @@ const getVendorOrders = async (req, res) => {
   });
 };
 
-module.exports = { createOrder, getMyOrders, getOrderById, returnOrder, getVendorOrders };
+const updateOrderStatus = async (req, res) => {
+  const { orderStatus } = req.body;
+  const validStatuses = ["Pending", "Accepted", "Packing", "Shipped", "Out For Delivery", "Delivered"];
+
+  if (!orderStatus || !validStatuses.includes(orderStatus)) {
+    res.status(400);
+    throw new Error(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    res.status(400);
+    throw new Error("Invalid order ID");
+  }
+
+  const order = await Order.findById(req.params.id);
+  if (!order) {
+    res.status(404);
+    throw new Error("Order not found");
+  }
+
+  // Verify this vendor has products in this order
+  const vendorProductIds = await Product.find({ vendor: req.user._id }).distinct("_id");
+  const hasVendorItems = order.orderItems.some((item) =>
+    vendorProductIds.some((pid) => pid.toString() === item.product.toString())
+  );
+
+  if (!hasVendorItems) {
+    res.status(403);
+    throw new Error("Not authorized to update this order");
+  }
+
+  order.orderStatus = orderStatus;
+
+  // Auto-set isDelivered when status is "Delivered"
+  if (orderStatus === "Delivered") {
+    order.isDelivered = true;
+    order.deliveredAt = new Date();
+  }
+
+  await order.save();
+
+  res.json({
+    success: true,
+    message: `Order status updated to ${orderStatus}`,
+    data: { orderId: order._id, orderStatus: order.orderStatus },
+  });
+};
+
+module.exports = { createOrder, getMyOrders, getOrderById, returnOrder, getVendorOrders, updateOrderStatus };
 

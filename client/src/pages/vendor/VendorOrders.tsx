@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import VendorLayout from '../../components/vendor/VendorLayout';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../hooks/useAuth';
-import { getVendorOrders } from '../../services/orderService';
+import { getVendorOrders, updateOrderStatus } from '../../services/orderService';
 import type { VendorOrder, VendorOrderItem } from '../../services/orderService';
 
 /* ── Helpers ── */
@@ -54,6 +54,7 @@ const VendorOrders: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   /* ── Fetch vendor orders ── */
   const fetchOrders = useCallback(async () => {
@@ -99,6 +100,21 @@ const VendorOrders: React.FC = () => {
   /* ── Toggle order detail expansion ── */
   const toggleExpand = useCallback((orderId: string) => {
     setExpandedOrder((prev) => (prev === orderId ? null : orderId));
+  }, []);
+
+  /* ── Update order status ── */
+  const handleStatusUpdate = useCallback(async (orderId: string, newStatus: string) => {
+    setUpdatingStatusId(orderId);
+    try {
+      await updateOrderStatus(orderId, newStatus);
+      // Refresh orders
+      const data = await getVendorOrders();
+      setOrders(data);
+    } catch {
+      setError('Failed to update order status.');
+    } finally {
+      setUpdatingStatusId(null);
+    }
   }, []);
 
   /* ── Loading state ── */
@@ -398,6 +414,32 @@ const VendorOrders: React.FC = () => {
                           from {vendorItems.length} {vendorItems.length === 1 ? 'item' : 'items'}
                         </p>
                       </div>
+                    </div>
+
+                    {/* Order Status Update */}
+                    <div className="bg-neutral-900/50 rounded-lg p-3">
+                      <h5 className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+                        Update Order Status
+                      </h5>
+                      <div className="flex items-center gap-3">
+                        <select
+                          value={order.orderStatus || 'Pending'}
+                          onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
+                          disabled={updatingStatusId === order._id}
+                          className="flex-1 rounded-lg border border-neutral-600 bg-neutral-800 py-2 px-3 text-sm text-neutral-100 focus:outline-none focus:border-primary-400/60 focus:ring-2 focus:ring-primary-400/20 transition-all duration-200 disabled:opacity-50"
+                        >
+                          {['Pending', 'Accepted', 'Packing', 'Shipped', 'Out For Delivery', 'Delivered'].map((status) => (
+                            <option key={status} value={status}>{status}</option>
+                          ))}
+                        </select>
+                        {updatingStatusId === order._id && (
+                          <svg className="animate-spin h-5 w-5 text-primary-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-neutral-600 mt-1.5">Status is visible to the customer on their orders page.</p>
                     </div>
                   </div>
                 </div>

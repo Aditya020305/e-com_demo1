@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import VendorLayout from '../../components/vendor/VendorLayout';
-import { useAuth } from '../../hooks/useAuth';
 import { getVendorAnalytics } from '../../services/vendorService';
 import type { VendorAnalytics, RecentOrder } from '../../services/vendorService';
 
@@ -116,7 +115,6 @@ const OrderRow: React.FC<{ order: RecentOrder }> = ({ order }) => {
    VendorDashboard — Main Dashboard Page
    ======================================== */
 const VendorDashboard: React.FC = () => {
-  const { user } = useAuth();
   const [analytics, setAnalytics] = useState<VendorAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -143,10 +141,10 @@ const VendorDashboard: React.FC = () => {
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-neutral-100">
-          Your Local Seller <span className="text-gradient-gold">Dashboard</span>
+          Your Seller <span className="text-gradient-gold">Dashboard</span>
         </h1>
         <p className="mt-2 text-neutral-400 text-sm">
-          Welcome back, <span className="text-primary-400 font-medium">{user?.name || 'Vendor'}</span>. Track your products, orders, and business performance across Jabalpur.
+          Track your products, orders, and business performance across Jabalpur.
         </p>
       </div>
 

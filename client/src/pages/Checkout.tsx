@@ -194,6 +194,8 @@ const Checkout: React.FC = () => {
               verifyErr?.response?.data?.message ||
               'Payment verification failed. Contact support.'
             );
+            // Re-fetch cart to ensure UI is in sync
+            fetchCart();
             setSubmitting(false);
           }
         },
@@ -207,6 +209,8 @@ const Checkout: React.FC = () => {
         modal: {
           ondismiss: () => {
             setApiError('Payment was cancelled. Your order is saved — you can retry payment from Orders page.');
+            // Re-fetch cart so it stays intact in UI
+            fetchCart();
             setSubmitting(false);
           },
         },
@@ -220,6 +224,8 @@ const Checkout: React.FC = () => {
         err?.message ||
         'Failed to initiate payment. Please try again.';
       setApiError(message);
+      // Re-fetch cart on failure
+      fetchCart();
       setSubmitting(false);
     }
   };

@@ -8,6 +8,7 @@ import type { ApiProduct } from '../services/productService';
 import API from '../api/axios';
 import Button from '../components/ui/Button';
 import { trackProductView } from '../utils/behaviorTracker';
+import { getProductThumbnail } from '../utils/imageHelper';
 
 /* ── Price Insight Types & Helper ── */
 interface PriceInsight {
@@ -78,7 +79,6 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
 );
 
 /* ── Fallback product image ── */
-const FALLBACK_IMAGE = '/products/headphones.png';
 
 /* ── Sentiment Analysis (Rule-Based) ── */
 const POSITIVE_WORDS = ['great', 'excellent', 'amazing', 'good', 'best', 'love', 'perfect', 'fantastic', 'awesome', 'wonderful', 'impressive', 'superb', 'outstanding', 'premium', 'comfortable', 'fast', 'smooth', 'durable', 'reliable', 'recommend'];
@@ -382,6 +382,11 @@ const ProductDetail: React.FC = () => {
     fetchProduct();
   }, [fetchProduct]);
 
+  /* ── Scroll to top on mount ── */
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   /* ── Track user behavior (runs after product loads) ── */
   useEffect(() => {
     if (product) {
@@ -462,8 +467,7 @@ const ProductDetail: React.FC = () => {
   }
 
   /* ── Derived values ── */
-  const productImage =
-    product.images && product.images.length > 0 ? product.images[0] : FALLBACK_IMAGE;
+  const productImage = getProductThumbnail(product.images, product.category);
 
   // Build a features list from the product description
   const productFeatures = product.description
@@ -836,9 +840,13 @@ const ProductDetail: React.FC = () => {
 
               {/* Buy Now */}
               <Button
-                onClick={() => {
-                  handleAddToCart();
-                  navigate('/checkout');
+                onClick={async () => {
+                  if (!isAuthenticated) {
+                    navigate('/login');
+                    return;
+                  }
+                  await addToCart(product._id);
+                  navigate('/cart');
                 }}
                 variant="primary"
                 size="lg"
@@ -977,8 +985,7 @@ const ProductDetail: React.FC = () => {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
               {recommendations.map((rec) => {
-                const recImage =
-                  rec.images && rec.images.length > 0 ? rec.images[0] : FALLBACK_IMAGE;
+                const recImage = getProductThumbnail(rec.images, rec.category);
                 return (
                   <Link
                     key={rec._id}
